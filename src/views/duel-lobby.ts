@@ -9,7 +9,7 @@ export function renderDuelLobby(): string {
 	if (state.duel) {
 		return `
       <div class="duel-lobby">
-        <button class="btn" id="btn-duel-back">← Terug</button>
+        <button class="btn" id="btn-duel-back"><i data-lucide="arrow-left"></i> Terug</button>
         <h2 class="duel-lobby__title">Duel aangemaakt</h2>
         <p class="duel-lobby__sub">Deel deze code met je tegenstander</p>
         <div class="duel-code">${state.duel.code}</div>
@@ -25,7 +25,7 @@ export function renderDuelLobby(): string {
 
 	return `
     <div class="duel-lobby">
-      <button class="btn" id="btn-duel-back">← Terug</button>
+      <button class="btn" id="btn-duel-back"><i data-lucide="arrow-left"></i> Terug</button>
       <h2 class="duel-lobby__title">Duel meedoen</h2>
       <p class="duel-lobby__sub">Voer de code van je vriend in</p>
       <div class="duel-join-form">

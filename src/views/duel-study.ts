@@ -71,8 +71,8 @@ export function renderDuelStudy(): string {
     </div>
 
     <div class="mark-row${duel.flipped ? " visible" : ""}" id="mark-row">
-      <button class="btn-red" id="btn-no">✗ Wist ik niet</button>
-      <button class="btn-green" id="btn-ok">✓ Wist ik het</button>
+      <button class="btn-red" id="btn-no"><i data-lucide="x"></i> Wist ik niet</button>
+      <button class="btn-green" id="btn-ok"><i data-lucide="check"></i> Wist ik het</button>
     </div>
   `;
 }
