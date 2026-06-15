@@ -17,8 +17,8 @@ export function renderDuelStudy(): string {
         <div class="duel-lobby__spinner"></div>
         <p class="duel-waiting__title">Klaar! Wachten op tegenstander…</p>
         <div class="duel-waiting__scores">
-          <div>Jij &nbsp; <span class="ok">✓ ${duel.correct}</span> <span class="no">✗ ${duel.wrong}</span></div>
-          <div>Tegenstander &nbsp; <span class="ok">✓ ${duel.opponent?.correct ?? 0}</span> <span class="no">✗ ${duel.opponent?.wrong ?? 0}</span> ${duel.opponent?.finished ? "· klaar" : "· bezig"}</div>
+          <div>${esc(duel.selfName)} &nbsp; <span class="ok">✓ ${duel.correct}</span> <span class="no">✗ ${duel.wrong}</span></div>
+          <div>${esc(duel.opponent?.name ?? "Tegenstander")} &nbsp; <span class="ok">✓ ${duel.opponent?.correct ?? 0}</span> <span class="no">✗ ${duel.opponent?.wrong ?? 0}</span> ${duel.opponent?.finished ? "· klaar" : "· bezig"}</div>
         </div>
         <div class="duel-opponent-prog">
           <span class="duel-player__label">Tegenstander</span>
@@ -34,13 +34,13 @@ export function renderDuelStudy(): string {
 	return `
     <div class="duel-scoreboard">
       <div class="duel-player">
-        <span class="duel-player__label">Jij</span>
+        <span class="duel-player__label">${esc(duel.selfName)}</span>
         <div class="prog-bar"><div class="prog-fill" style="width:${selfPct}%"></div></div>
         <span class="duel-player__count">${selfDone}/${total}</span>
       </div>
       <div class="duel-vs">VS</div>
       <div class="duel-player duel-player--opp">
-        <span class="duel-player__label">Tegenstander</span>
+        <span class="duel-player__label">${esc(duel.opponent?.name ?? "Tegenstander")}</span>
         <div class="prog-bar"><div class="prog-fill prog-fill--opp" id="opp-bar" style="width:${oppPct}%"></div></div>
         <span class="duel-player__count" id="opp-done">${oppDone}/${total}</span>
       </div>

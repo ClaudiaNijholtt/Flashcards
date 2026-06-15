@@ -13,6 +13,7 @@ export interface Deck {
 export interface AuthUser {
   id: string;
   email: string | undefined;
+  username?: string | null;
 }
 
 export interface ActiveDuel {
@@ -28,17 +29,19 @@ export interface ActiveDuel {
   selfFinished: boolean;
   selfTimeMs: number;
   startTime: number;
+  selfName: string;
   opponent: {
     cardsDone: number;
     correct: number;
     wrong: number;
     finished: boolean;
     timeMs: number;
+    name: string;
   } | null;
 }
 
 export interface AppState {
-  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result';
+  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup';
   decks: Deck[];
   activeDeckId: string | null;
   cardIndex: number;
