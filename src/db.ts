@@ -16,8 +16,12 @@ export async function fetchDecks(): Promise<Deck[]> {
 }
 
 export async function insertDeck(deck: Deck): Promise<void> {
+	const { data: { user } } = await supabase.auth.getUser();
+	if (!user) throw new Error("Niet ingelogd");
+
 	const { error } = await supabase.from("decks").insert({
 		id: deck.id,
+		user_id: user.id,
 		name: deck.name,
 		cards: deck.cards,
 		created_at: deck.createdAt,
