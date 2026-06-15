@@ -15,8 +15,30 @@ export interface AuthUser {
   email: string | undefined;
 }
 
+export interface ActiveDuel {
+  id: string;
+  code: string;
+  deckName: string;
+  cards: Flashcard[];
+  isHost: boolean;
+  cardIndex: number;
+  flipped: boolean;
+  correct: number;
+  wrong: number;
+  selfFinished: boolean;
+  selfTimeMs: number;
+  startTime: number;
+  opponent: {
+    cardsDone: number;
+    correct: number;
+    wrong: number;
+    finished: boolean;
+    timeMs: number;
+  } | null;
+}
+
 export interface AppState {
-  view: 'home' | 'study' | 'done';
+  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result';
   decks: Deck[];
   activeDeckId: string | null;
   cardIndex: number;
@@ -28,6 +50,7 @@ export interface AppState {
   isGenerating: boolean;
   generationProgress: string;
   user: AuthUser | null;
+  duel: ActiveDuel | null;
 }
 
 export interface AnthropicMessage {
