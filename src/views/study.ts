@@ -33,7 +33,7 @@ export function renderStudy(): string {
 
 	return `
     <div class="study-header">
-      <button class="btn study-header__back" id="btn-back">← Terug</button>
+      <button class="btn study-header__back" id="btn-back"><i data-lucide="arrow-left"></i> Terug</button>
       <div class="study-header__title">${esc(deck.name)}</div>
     </div>
 
@@ -41,8 +41,8 @@ export function renderStudy(): string {
       <span>${state.cardIndex + 1} / ${deck.cards.length}</span>
       <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
       <div class="score-row">
-        <span class="ok">✓ ${state.correct}</span>
-        <span class="no">✗ ${state.wrong}</span>
+        <span class="ok"><i data-lucide="check"></i> ${state.correct}</span>
+        <span class="no"><i data-lucide="x"></i> ${state.wrong}</span>
       </div>
     </div>
 

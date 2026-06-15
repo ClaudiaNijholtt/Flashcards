@@ -30,7 +30,7 @@ export function renderDuelLobby(): string {
       <p class="duel-lobby__sub">Voer de code van je vriend in</p>
       <div class="duel-join-form">
         <input type="text" id="duel-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-        <button class="btn-primary" id="btn-join-duel">Meedoen →</button>
+        <button class="btn-primary" id="btn-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
       </div>
       <p id="duel-lobby-error" class="duel-lobby__error hidden"></p>
     </div>
@@ -140,7 +140,7 @@ function bindJoinForm(render: () => void): void {
 		} catch (err) {
 			showLobbyError(err instanceof Error ? err.message : "Kan niet meedoen");
 			btn.disabled = false;
-			btn.textContent = "Meedoen →";
+			btn.textContent = "Meedoen";
 		}
 	});
 }

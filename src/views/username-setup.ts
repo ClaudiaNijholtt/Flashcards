@@ -26,7 +26,7 @@ export function renderUsernameSetup(): string {
       </div>
       <div class="auth-error hidden" id="username-error"></div>
       <button class="btn-primary" id="btn-save-username" style="margin-top:1rem;width:100%">
-        Opslaan en verder →
+        Opslaan en verder <i data-lucide="arrow-right"></i>
       </button>
     </div>
   `;
@@ -65,7 +65,7 @@ export function bindUsernameSetupEvents(render: () => void): void {
 		} catch (err) {
 			showUsernameError(err instanceof Error ? err.message : "Opslaan mislukt");
 			btn.disabled = false;
-			btn.textContent = "Opslaan en verder →";
+			btn.textContent = "Opslaan en verder";
 		}
 	});
 }
