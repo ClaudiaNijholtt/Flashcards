@@ -1,0 +1,128 @@
+@use "./variables" as *;
+@use "sass:color";
+
+%btn-base {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 9px 18px;
+	border-radius: $radius-md;
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	border: 1.5px solid $border-mid;
+	background: $surface;
+	color: $text;
+	transition:
+		background $transition,
+		border-color $transition,
+		opacity $transition;
+	outline: none;
+	white-space: nowrap;
+
+	&:hover {
+		background: color.adjust($bg, $lightness: -2%);
+		border-color: #aaa;
+	}
+
+	&:focus-visible {
+		box-shadow: 0 0 0 3px rgba(26, 26, 24, 0.2);
+	}
+
+	&:disabled {
+		opacity: 0.38;
+		cursor: not-allowed;
+		pointer-events: none;
+	}
+}
+
+.btn {
+	@extend %btn-base;
+}
+.btn-primary {
+	@extend %btn-base;
+	background: $text;
+	color: #fff;
+	border-color: $text;
+	&:hover {
+		background: #333;
+		border-color: #333;
+	}
+}
+.btn-green {
+	@extend %btn-base;
+	background: $green-bg;
+	color: $green;
+	border-color: $green-border;
+	&:hover {
+		background: color.adjust($green-bg, $lightness: -4%);
+	}
+}
+.btn-red {
+	@extend %btn-base;
+	background: $red-bg;
+	color: $red;
+	border-color: $red-border;
+	&:hover {
+		background: color.adjust($red-bg, $lightness: -4%);
+	}
+}
+.btn-icon {
+	@extend %btn-base;
+	padding: 8px 12px;
+	color: $text-muted;
+	border-color: $border;
+	&:hover {
+		color: $red;
+		border-color: $red-border;
+		background: $red-bg;
+	}
+}
+
+.kbd {
+	display: inline-block;
+	background: color.adjust($bg, $lightness: -3%);
+	border: 1px solid $border-mid;
+	border-radius: 4px;
+	font-size: 10px;
+	padding: 1px 5px;
+	color: $text-muted;
+	font-family: monospace;
+	line-height: 1.6;
+}
+
+.mark-row {
+	display: flex;
+	gap: 10px;
+	justify-content: center;
+	margin-bottom: 1rem;
+	min-height: 44px;
+	visibility: hidden;
+
+	&.visible {
+		visibility: visible;
+	}
+}
+
+.nav-row {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	margin-bottom: 1.25rem;
+}
+
+.shortcuts {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	justify-content: center;
+	font-size: 12px;
+	color: $text-hint;
+	margin-bottom: 1rem;
+
+	span {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+	}
+}
