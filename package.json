@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
-    "dotenv-webpack": "^9.0.0"
+    "dotenv-webpack": "^9.0.0",
+    "lucide": "^1.18.0"
   }
 }
