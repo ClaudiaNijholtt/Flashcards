@@ -136,7 +136,7 @@ function attachShakeListener(render: () => void): void {
 		if (!acc) return;
 		const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
 		const now = Date.now();
-		if (mag > 12 && now - lastShake > 800) {
+		if (mag > 15 && now - lastShake > 1000) {
 			lastShake = now;
 			doShuffle(render);
 		}
