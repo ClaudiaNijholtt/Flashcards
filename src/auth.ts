@@ -9,7 +9,12 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function signUpWithEmail(email: string, password: string): Promise<AuthUser> {
-	const { data, error } = await supabase.auth.signUp({ email, password });
+	const redirectTo = window.location.origin + window.location.pathname;
+	const { data, error } = await supabase.auth.signUp({
+		email,
+		password,
+		options: { emailRedirectTo: redirectTo },
+	});
 	if (error) throw error;
 	const u = data.user!;
 	return { id: u.id, email: u.email };

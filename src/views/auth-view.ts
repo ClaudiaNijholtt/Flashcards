@@ -23,7 +23,19 @@ export function renderAuth(): string {
         </div>
         <div class="auth-field">
           <label for="auth-password">Wachtwoord</label>
-          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+          <div class="password-wrap">
+            <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" />
+            <button type="button" class="btn-show-pw" id="btn-show-pw" aria-label="Wachtwoord tonen">
+              <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="pw-strength hidden" id="pw-strength">
+            <div class="pw-strength__bar"><div class="pw-strength__fill" id="pw-fill"></div></div>
+            <span class="pw-strength__label" id="pw-label"></span>
+          </div>
         </div>
         <div class="auth-error hidden" id="auth-error"></div>
         <button class="btn-primary auth-submit" id="auth-submit">Inloggen</button>
@@ -55,6 +67,8 @@ export function renderAuth(): string {
 export function bindAuthEvents(): void {
 	let mode: Mode = "login";
 
+	const pwInput = document.getElementById("auth-password") as HTMLInputElement;
+
 	document.querySelectorAll<HTMLElement>(".auth-tab").forEach((tab) => {
 		tab.addEventListener("click", () => {
 			mode = tab.dataset.tab as Mode;
@@ -62,22 +76,49 @@ export function bindAuthEvents(): void {
 			tab.classList.add("active");
 			const submit = document.getElementById("auth-submit")!;
 			submit.textContent = mode === "login" ? "Inloggen" : "Account aanmaken";
+			// Show strength meter only in register mode
+			document.getElementById("pw-strength")?.classList.toggle("hidden", mode === "login");
+			if (mode === "login") updateStrength("");
 			clearError();
 		});
 	});
 
+	// Show/hide password toggle
+	document.getElementById("btn-show-pw")?.addEventListener("click", () => {
+		const isText = pwInput.type === "text";
+		pwInput.type = isText ? "password" : "text";
+		const icon = document.getElementById("eye-icon");
+		if (icon) {
+			icon.innerHTML = isText
+				? `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`
+				: `<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+		}
+	});
+
+	// Live password strength in register mode
+	pwInput?.addEventListener("input", () => {
+		if (mode === "register") {
+			document.getElementById("pw-strength")?.classList.remove("hidden");
+			updateStrength(pwInput.value);
+		}
+	});
+
 	document.getElementById("auth-submit")?.addEventListener("click", async () => {
 		const email = (document.getElementById("auth-email") as HTMLInputElement).value.trim();
-		const password = (document.getElementById("auth-password") as HTMLInputElement).value;
+		const password = pwInput.value;
 		clearError();
 
 		if (!email || !password) {
 			showError("Vul je e-mailadres en wachtwoord in.");
 			return;
 		}
-		if (mode === "register" && password.length < 8) {
-			showError("Wachtwoord moet minimaal 8 tekens bevatten.");
-			return;
+
+		if (mode === "register") {
+			const strength = getStrength(password);
+			if (strength < 2) {
+				showError("Wachtwoord is te zwak. Gebruik minimaal 8 tekens met letters en cijfers.");
+				return;
+			}
 		}
 
 		const btn = document.getElementById("auth-submit") as HTMLButtonElement;
@@ -90,6 +131,8 @@ export function bindAuthEvents(): void {
 			} else {
 				await signUpWithEmail(email, password);
 				showToast("Account aangemaakt — controleer je e-mail ter bevestiging ✓");
+				btn.disabled = false;
+				btn.textContent = "Account aanmaken";
 			}
 		} catch (err) {
 			showError(translateError(err));
@@ -98,7 +141,7 @@ export function bindAuthEvents(): void {
 		}
 	});
 
-	document.getElementById("auth-password")?.addEventListener("keydown", (e) => {
+	pwInput?.addEventListener("keydown", (e) => {
 		if (e.key === "Enter") document.getElementById("auth-submit")?.click();
 	});
 
@@ -109,6 +152,42 @@ export function bindAuthEvents(): void {
 	document.getElementById("btn-github")?.addEventListener("click", async () => {
 		try { await signInWithGitHub(); } catch (err) { showError(translateError(err)); }
 	});
+}
+
+function getStrength(pw: string): number {
+	if (pw.length < 6) return 0;
+	let score = 0;
+	if (pw.length >= 8) score++;
+	if (/[A-Z]/.test(pw)) score++;
+	if (/[0-9]/.test(pw)) score++;
+	if (/[^A-Za-z0-9]/.test(pw)) score++;
+	return score;
+}
+
+function updateStrength(pw: string): void {
+	const fill = document.getElementById("pw-fill");
+	const label = document.getElementById("pw-label");
+	if (!fill || !label) return;
+
+	if (!pw) {
+		fill.style.width = "0%";
+		fill.style.background = "transparent";
+		label.textContent = "";
+		return;
+	}
+
+	const score = getStrength(pw);
+	const levels = [
+		{ pct: "20%", color: "#e05252", text: "Zeer zwak" },
+		{ pct: "40%", color: "#e07832", text: "Zwak" },
+		{ pct: "65%", color: "#e0c032", text: "Redelijk" },
+		{ pct: "85%", color: "#4caf7d", text: "Sterk" },
+		{ pct: "100%", color: "#2e7d52", text: "Zeer sterk" },
+	];
+	const lvl = levels[Math.min(score, 4)];
+	fill.style.width = lvl.pct;
+	fill.style.background = lvl.color;
+	label.textContent = lvl.text;
 }
 
 function showError(msg: string): void {

@@ -13,7 +13,9 @@ import { renderAuth, bindAuthEvents } from "./views/auth-view";
 import { renderDuelLobby, bindDuelLobbyEvents } from "./views/duel-lobby";
 import { renderDuelStudy, bindDuelStudyEvents } from "./views/duel-study";
 import { renderDuelResult, bindDuelResultEvents } from "./views/duel-result";
+import { renderUsernameSetup, bindUsernameSetupEvents } from "./views/username-setup";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./duel-db";
+import { fetchProfile } from "./profile";
 import { duelChannel } from "./duel-channel";
 import { supabase } from "./supabase";
 import type { AuthUser } from "./types";
@@ -44,6 +46,9 @@ function render(): void {
 	} else if (state.view === "duel-result") {
 		app.innerHTML = renderDuelResult();
 		bindDuelResultEvents(render);
+	} else if (state.view === "username-setup") {
+		app.innerHTML = renderUsernameSetup();
+		bindUsernameSetupEvents(render);
 	}
 
 	createIcons({ icons: { Trash2, LogOut, Download, Upload } });
@@ -67,6 +72,7 @@ async function handleStartDuel(deckId: string): Promise<void> {
 			selfFinished: false,
 			selfTimeMs: 0,
 			startTime: 0,
+			selfName: state.user?.username ?? state.user?.email?.split("@")[0] ?? "Jij",
 			opponent: null,
 		};
 		state.view = "duel-lobby";
@@ -86,6 +92,7 @@ async function handleJoinDuel(code: string): Promise<void> {
 
 		await joinDuelInDb(record.id);
 
+		const hostProfile = await fetchProfile(record.host_id);
 		state.duel = {
 			id: record.id,
 			code: record.code,
@@ -99,7 +106,8 @@ async function handleJoinDuel(code: string): Promise<void> {
 			selfFinished: false,
 			selfTimeMs: 0,
 			startTime: Date.now(),
-			opponent: { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0 },
+			selfName: state.user?.username ?? state.user?.email?.split("@")[0] ?? "Jij",
+			opponent: { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0, name: hostProfile?.username ?? "Tegenstander" },
 		};
 
 		const gameCh = supabase.channel(`duel:${record.code}`).subscribe();
@@ -115,6 +123,11 @@ async function handleJoinDuel(code: string): Promise<void> {
 async function onLogin(user: AuthUser): Promise<void> {
 	state.user = user;
 
+	const profile = await fetchProfile(user.id);
+	if (profile) {
+		state.user.username = profile.username;
+	}
+
 	// Migrate localStorage decks to Supabase on first login
 	const localDecks = loadDecks();
 	if (localDecks.length > 0) {
@@ -127,6 +140,12 @@ async function onLogin(user: AuthUser): Promise<void> {
 		} catch {
 			showToast("Migratie deels mislukt — decks staan nog lokaal", true);
 		}
+	}
+
+	if (!profile) {
+		state.view = "username-setup";
+		render();
+		return;
 	}
 
 	state.decks = await fetchDecks();

@@ -1,4 +1,5 @@
 import { state } from "../state";
+import { esc } from "../helpers";
 import { duelChannel } from "../duel-channel";
 
 function formatTime(ms: number): string {
@@ -30,14 +31,14 @@ export function renderDuelResult(): string {
 
       <div class="duel-result__scores">
         <div class="duel-result__col">
-          <div class="duel-result__player">Jij</div>
+          <div class="duel-result__player">${esc(duel.selfName)}</div>
           <div class="duel-result__stat ok">✓ ${duel.correct} / ${total}</div>
           <div class="duel-result__stat no">✗ ${duel.wrong}</div>
           <div class="duel-result__time">${formatTime(duel.selfTimeMs)}</div>
         </div>
         <div class="duel-result__divider">VS</div>
         <div class="duel-result__col">
-          <div class="duel-result__player">Tegenstander</div>
+          <div class="duel-result__player">${esc(opp.name)}</div>
           <div class="duel-result__stat ok">✓ ${opp.correct} / ${total}</div>
           <div class="duel-result__stat no">✗ ${opp.wrong}</div>
           <div class="duel-result__time">${formatTime(opp.timeMs)}</div>
