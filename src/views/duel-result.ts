@@ -46,7 +46,7 @@ export function renderDuelResult(): string {
       </div>
 
       <div class="duel-result__btns">
-        <button class="btn" id="btn-duel-home">← Home</button>
+        <button class="btn" id="btn-duel-home"><i data-lucide="arrow-left"></i> Home</button>
       </div>
     </div>
   `;

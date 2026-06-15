@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./helpers";
 import { loadDecks, clearLocalDecks } from "./storage";
@@ -51,7 +51,7 @@ function render(): void {
 		bindUsernameSetupEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw } });
 }
 
 async function handleStartDuel(deckId: string): Promise<void> {
