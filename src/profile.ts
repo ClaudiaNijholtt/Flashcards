@@ -18,6 +18,6 @@ export async function saveUsername(username: string): Promise<void> {
 	const { error } = await supabase.from("profiles").upsert({ id: user.id, username });
 	if (error) {
 		if (error.code === "23505") throw new Error("Deze gebruikersnaam is al bezet");
-		throw error;
+		throw new Error(error.message);
 	}
 }
