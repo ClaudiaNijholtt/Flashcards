@@ -20,6 +20,7 @@ export function renderHome(): string {
           <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
         </div>
         <div class="deck-card__actions">
+          <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON">↓</button>
           <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen">🗑</button>
         </div>
       </div>`,
@@ -60,6 +61,11 @@ export function renderHome(): string {
       <div class="upload-zone__icon"></div>
       <div class="upload-zone__title">Klik of sleep een document</div>
       <div class="upload-zone__sub">PDF, TXT of Markdown · meerdere bestanden tegelijk</div>
+    </div>
+
+    <div class="import-row">
+      <input type="file" id="json-input" accept=".json" style="display:none" />
+      <button class="btn" id="btn-import-json">↑ Deck importeren via JSON</button>
     </div>
 
     ${state.decks.length > 0 ? `<div class="section-title">Mijn decks</div>` : ""}
@@ -127,6 +133,56 @@ export function bindHomeEvents(
 		if (files.length) handleFiles(files, render);
 	});
 
+	// Export deck as JSON
+	document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			const deck = state.decks.find((d) => d.id === btn.dataset.export);
+			if (!deck) return;
+			const json = JSON.stringify({ name: deck.name, cards: deck.cards }, null, 2);
+			const blob = new Blob([json], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${deck.name.replace(/[^a-z0-9]/gi, "_")}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
+		});
+	});
+
+	// Import deck from JSON
+	const jsonInput = document.getElementById("json-input") as HTMLInputElement;
+	document.getElementById("btn-import-json")?.addEventListener("click", () => jsonInput.click());
+	jsonInput.addEventListener("change", async () => {
+		const file = jsonInput.files?.[0];
+		if (!file) return;
+		jsonInput.value = "";
+		try {
+			const data = JSON.parse(await file.text());
+			if (!isValidDeckJson(data)) {
+				showToast("Ongeldig JSON-formaat — verwacht: { name, cards: [{ question, answer }] }", true);
+				return;
+			}
+			const deck: Deck = {
+				id: Date.now().toString(),
+				name: data.name,
+				cards: data.cards,
+				createdAt: new Date(),
+			};
+			if (state.user) {
+				await insertDeck(deck);
+				state.decks = await fetchDecks();
+			} else {
+				state.decks.push(deck);
+				saveDecks(state.decks);
+			}
+			showToast(`"${esc(data.name)}" geïmporteerd ✓`);
+			render();
+		} catch {
+			showToast("Kan JSON-bestand niet lezen", true);
+		}
+	});
+
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			if ((e.target as HTMLElement).closest("[data-delete]")) return;
@@ -149,6 +205,20 @@ export function bindHomeEvents(
 			}
 		});
 	});
+}
+
+function isValidDeckJson(data: unknown): data is { name: string; cards: { question: string; answer: string }[] } {
+	if (typeof data !== "object" || data === null) return false;
+	const d = data as Record<string, unknown>;
+	if (typeof d.name !== "string" || !d.name.trim()) return false;
+	if (!Array.isArray(d.cards) || d.cards.length === 0) return false;
+	return d.cards.every(
+		(c) =>
+			typeof c === "object" &&
+			c !== null &&
+			typeof (c as Record<string, unknown>).question === "string" &&
+			typeof (c as Record<string, unknown>).answer === "string",
+	);
 }
 
 async function handleFiles(files: File[], render: () => void): Promise<void> {
