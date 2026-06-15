@@ -32,3 +32,7 @@ export function deleteDeck(id: string, decks: Deck[]): Deck[] {
   saveDecks(updated);
   return updated;
 }
+
+export function clearLocalDecks(): void {
+  localStorage.removeItem(KEYS.decks);
+}

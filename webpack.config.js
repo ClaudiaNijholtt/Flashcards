@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = (env, argv) => {
   const isDev = argv.mode === 'development';
@@ -33,6 +34,7 @@ module.exports = (env, argv) => {
       ],
     },
     plugins: [
+      new Dotenv({ silent: true }),
       new HtmlWebpackPlugin({
         template: './public/index.html',
         favicon: './public/favicon.svg',
