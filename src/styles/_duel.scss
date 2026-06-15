@@ -1,0 +1,253 @@
+@use "./variables" as *;
+@use "sass:color";
+
+// ── Lobby ────────────────────────────────────────────────────────────────────
+
+.duel-lobby {
+	max-width: 440px;
+	margin: 0 auto;
+	text-align: center;
+	padding-top: 1rem;
+
+	.btn {
+		margin-bottom: 1.5rem;
+	}
+
+	&__title {
+		font-size: 22px;
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+	}
+
+	&__sub {
+		color: $text-muted;
+		font-size: 14px;
+		margin-bottom: 1.75rem;
+	}
+
+	&__waiting {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		font-size: 14px;
+		color: $text-muted;
+		margin: 1.5rem 0;
+	}
+
+	&__spinner {
+		width: 18px;
+		height: 18px;
+		border: 2px solid $border;
+		border-top-color: $text;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+		flex-shrink: 0;
+	}
+
+	&__deck {
+		font-size: 13px;
+		color: $text-muted;
+		margin-top: 0.5rem;
+	}
+
+	&__error {
+		color: $red;
+		font-size: 13px;
+		margin-top: 0.75rem;
+	}
+}
+
+.duel-code {
+	display: inline-block;
+	font-size: 40px;
+	font-weight: 700;
+	letter-spacing: 0.18em;
+	font-family: monospace;
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+	padding: 0.75rem 1.75rem;
+	margin-bottom: 1rem;
+}
+
+.duel-join-form {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	margin-bottom: 0.5rem;
+
+	input {
+		width: 130px;
+		padding: 9px 14px;
+		border: 1.5px solid $border-mid;
+		border-radius: $radius-sm;
+		font-size: 20px;
+		font-family: monospace;
+		letter-spacing: 0.12em;
+		text-align: center;
+		text-transform: uppercase;
+		background: $bg;
+		color: $text;
+		outline: none;
+
+		&:focus {
+			border-color: $text;
+		}
+	}
+}
+
+// ── In-game scoreboard ───────────────────────────────────────────────────────
+
+.duel-scoreboard {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 1.25rem;
+	padding: 0.75rem 1rem;
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+}
+
+.duel-player {
+	flex: 1;
+	min-width: 0;
+
+	&__label {
+		display: block;
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: $text-muted;
+		margin-bottom: 4px;
+	}
+
+	&__count {
+		font-size: 12px;
+		color: $text-muted;
+		margin-top: 3px;
+		display: block;
+	}
+
+	.prog-bar {
+		margin: 0;
+	}
+}
+
+.duel-vs {
+	font-size: 11px;
+	font-weight: 700;
+	color: $text-hint;
+	flex-shrink: 0;
+	letter-spacing: 0.05em;
+}
+
+.prog-fill--opp {
+	background: color.adjust($text, $lightness: 40%);
+}
+
+// ── Waiting screen (self finished, waiting for opponent) ─────────────────────
+
+.duel-waiting {
+	text-align: center;
+	padding: 3rem 1rem;
+
+	&__title {
+		font-size: 16px;
+		font-weight: 600;
+		margin: 1rem 0 1.5rem;
+	}
+
+	&__scores {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		font-size: 14px;
+		color: $text-muted;
+		margin-bottom: 2rem;
+	}
+}
+
+.duel-opponent-prog {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	max-width: 360px;
+	margin: 0 auto;
+
+	.prog-bar {
+		flex: 1;
+	}
+
+	span {
+		font-size: 12px;
+		color: $text-muted;
+		white-space: nowrap;
+	}
+}
+
+// ── Result screen ────────────────────────────────────────────────────────────
+
+.duel-result {
+	text-align: center;
+	padding: 2rem 0;
+
+	&__verdict {
+		font-size: 26px;
+		font-weight: 700;
+		margin-bottom: 2rem;
+	}
+
+	&__scores {
+		display: flex;
+		align-items: flex-start;
+		justify-content: center;
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+
+	&__col {
+		flex: 1;
+		max-width: 160px;
+		background: $surface;
+		border: 1.5px solid $border;
+		border-radius: $radius-lg;
+		padding: 1.25rem 1rem;
+	}
+
+	&__player {
+		font-size: 12px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: $text-muted;
+		margin-bottom: 0.75rem;
+	}
+
+	&__stat {
+		font-size: 18px;
+		font-weight: 600;
+		margin-bottom: 4px;
+	}
+
+	&__time {
+		font-size: 13px;
+		color: $text-muted;
+		margin-top: 0.5rem;
+	}
+
+	&__divider {
+		font-size: 12px;
+		font-weight: 700;
+		color: $text-hint;
+		padding-top: 3rem;
+	}
+
+	&__btns {
+		display: flex;
+		gap: 10px;
+		justify-content: center;
+	}
+}

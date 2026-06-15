@@ -1,123 +1,135 @@
-@use './variables' as *;
+@use "./variables" as *;
 
 .auth-card {
-  background: $surface;
-  border: 1.5px solid $border;
-  border-radius: $radius-lg;
-  padding: 1.5rem;
-  max-width: 420px;
-  margin: 0 auto;
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+	padding: 1.5rem;
+	max-width: 420px;
+	margin: 0 auto;
 }
 
 .auth-tabs {
-  display: flex;
-  border-bottom: 1.5px solid $border;
-  margin-bottom: 1.25rem;
+	display: flex;
+	border-bottom: 1.5px solid $border;
+	margin-bottom: 1.25rem;
 }
 
 .auth-tab {
-  flex: 1;
-  padding: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1.5px;
-  cursor: pointer;
-  color: $text-muted;
-  transition: color $transition, border-color $transition;
+	flex: 1;
+	padding: 10px;
+	font-size: 14px;
+	font-weight: 500;
+	background: none;
+	border: none;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1.5px;
+	cursor: pointer;
+	color: $text-muted;
+	transition:
+		color $transition,
+		border-color $transition;
 
-  &.active {
-    color: $text;
-    border-bottom-color: $text;
-  }
-  &:hover:not(.active) { color: $text; }
+	&.active {
+		color: $text;
+		border-bottom-color: $text;
+	}
+	&:hover:not(.active) {
+		color: $text;
+	}
 }
 
 .auth-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
 }
 
 .auth-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+	display: flex;
+	flex-direction: column;
+	gap: 5px;
 
-  label {
-    font-size: 13px;
-    font-weight: 500;
-    color: $text;
-  }
+	label {
+		font-size: 13px;
+		font-weight: 500;
+		color: $text;
+	}
 
-  input[type="email"], input[type="password"] {
-    padding: 9px 12px;
-    border: 1.5px solid $border-mid;
-    border-radius: $radius-sm;
-    font-size: 14px;
-    background: $bg;
-    color: $text;
-    outline: none;
-    width: 100%;
-    &:focus { border-color: $text; }
-  }
+	input[type="email"],
+	input[type="password"] {
+		padding: 9px 12px;
+		border: 1.5px solid $border-mid;
+		border-radius: $radius-sm;
+		font-size: 14px;
+		background: $bg;
+		color: $text;
+		outline: none;
+		width: 100%;
+		&:focus {
+			border-color: $text;
+		}
+	}
 }
 
 .auth-error {
-  font-size: 13px;
-  color: $red;
-  padding: 8px 12px;
-  background: $red-bg;
-  border: 1px solid $red-border;
-  border-radius: $radius-sm;
+	font-size: 13px;
+	color: $red;
+	padding: 8px 12px;
+	background: $red-bg;
+	border: 1px solid $red-border;
+	border-radius: $radius-sm;
 }
 
 .auth-submit {
-  width: 100%;
-  justify-content: center;
-  padding: 10px;
+	width: 100%;
+	justify-content: center;
+	padding: 10px;
 }
 
 .auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 1.25rem 0;
-  font-size: 12px;
-  color: $text-hint;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 1.25rem 0;
+	font-size: 12px;
+	color: $text-hint;
 
-  &::before, &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: $border;
-  }
+	&::before,
+	&::after {
+		content: "";
+		flex: 1;
+		height: 1px;
+		background: $border;
+	}
 }
 
 .auth-social {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 .auth-social-btn {
-  width: 100%;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px;
+	width: 100%;
+	justify-content: center;
+	gap: 10px;
+	padding: 10px;
 }
 
 .user-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  color: $text-muted;
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1.5px solid $border;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 13px;
+	color: $text-muted;
+	margin-bottom: 1.75rem;
+	padding-bottom: 1.25rem;
+	border-bottom: 1.5px solid $border;
 
-  span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
 }

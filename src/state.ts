@@ -14,4 +14,5 @@ export const state: AppState = {
 	isGenerating: false,
 	generationProgress: "",
 	user: null,
+	duel: null,
 };
