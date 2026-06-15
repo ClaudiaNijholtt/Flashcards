@@ -1,0 +1,119 @@
+@use "./variables" as *;
+
+.api-key-section {
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+	padding: 1.25rem 1.5rem;
+	margin-bottom: 1.5rem;
+
+	&__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+		cursor: pointer;
+		user-select: none;
+	}
+
+	&__title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 14px;
+		font-weight: 600;
+
+		.dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: $red-border;
+			&.ok {
+				background: $green-border;
+			}
+		}
+	}
+
+	&__body {
+		display: flex;
+		gap: 8px;
+	}
+
+	input[type="password"],
+	input[type="text"] {
+		flex: 1;
+		padding: 9px 12px;
+		border: 1.5px solid $border-mid;
+		border-radius: $radius-sm;
+		font-size: 14px;
+		font-family: monospace;
+		background: $bg;
+		color: $text;
+		outline: none;
+		&:focus {
+			border-color: $text;
+		}
+	}
+}
+
+.upload-zone {
+	border: 2px dashed $border-mid;
+	border-radius: $radius-lg;
+	padding: 2.5rem 1.5rem;
+	text-align: center;
+	cursor: pointer;
+	transition:
+		border-color $transition,
+		background $transition;
+	margin-bottom: 1.5rem;
+
+	&:hover,
+	&.drag-over {
+		border-color: $text;
+		background: rgba(0, 0, 0, 0.02);
+	}
+
+	input[type="file"] {
+		display: none;
+	}
+
+	&__icon {
+		font-size: 32px;
+		margin-bottom: 0.75rem;
+	}
+	&__title {
+		font-size: 15px;
+		font-weight: 600;
+		margin-bottom: 4px;
+	}
+	&__sub {
+		font-size: 13px;
+		color: $text-muted;
+	}
+}
+
+.generating {
+	text-align: center;
+	padding: 2.5rem 1rem;
+
+	&__spinner {
+		width: 36px;
+		height: 36px;
+		border: 3px solid $border;
+		border-top-color: $text;
+		border-radius: 50%;
+		animation: spin 0.8s linear infinite;
+		margin: 0 auto 1rem;
+	}
+
+	&__msg {
+		font-size: 14px;
+		color: $text-muted;
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}

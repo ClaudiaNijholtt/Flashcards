@@ -1,4 +1,4 @@
-# ⚡ Flashcard Generator
+# Flashcard Generator
 
 AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcards genereren. Werkt als PWA op je telefoon.
 
@@ -48,11 +48,13 @@ npx gh-pages -d dist
 ## Als PWA installeren op je telefoon
 
 **iPhone (Safari):**
+
 1. Open de app-URL in Safari
 2. Tik op het Deel-icoon (vierkantje met pijltje omhoog)
 3. Kies "Zet op beginscherm"
 
 **Android (Chrome):**
+
 1. Open de app-URL in Chrome
 2. Tik op de drie puntjes → "Toevoegen aan startscherm"
 
@@ -78,11 +80,11 @@ flashcard-app/
 
 ## Ondersteunde bestandsformaten
 
-| Formaat | Ondersteuning |
-|---------|--------------|
-| PDF     | ✅ Volledige tekst via Anthropic's document API |
-| TXT     | ✅ Directe upload |
-| Markdown (.md) | ✅ Directe upload |
+| Formaat        | Ondersteuning                                |
+| -------------- | -------------------------------------------- |
+| PDF            | Volledige tekst via Anthropic's document API |
+| TXT            | Directe upload                               |
+| Markdown (.md) | Directe upload                               |
 
 ## Aanpassen
 
