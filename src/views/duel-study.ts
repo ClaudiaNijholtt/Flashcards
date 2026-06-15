@@ -17,8 +17,8 @@ export function renderDuelStudy(): string {
         <div class="duel-lobby__spinner"></div>
         <p class="duel-waiting__title">Klaar! Wachten op tegenstander…</p>
         <div class="duel-waiting__scores">
-          <div>${esc(duel.selfName)} &nbsp; <span class="ok">✓ ${duel.correct}</span> <span class="no">✗ ${duel.wrong}</span></div>
-          <div>${esc(duel.opponent?.name ?? "Tegenstander")} &nbsp; <span class="ok">✓ ${duel.opponent?.correct ?? 0}</span> <span class="no">✗ ${duel.opponent?.wrong ?? 0}</span> ${duel.opponent?.finished ? "· klaar" : "· bezig"}</div>
+          <div>${esc(duel.selfName)} &nbsp; <span class="ok"><i data-lucide="check"></i> ${duel.correct}</span> <span class="no"><i data-lucide="x"></i> ${duel.wrong}</span></div>
+          <div>${esc(duel.opponent?.name ?? "Tegenstander")} &nbsp; <span class="ok"><i data-lucide="check"></i> ${duel.opponent?.correct ?? 0}</span> <span class="no"><i data-lucide="x"></i> ${duel.opponent?.wrong ?? 0}</span> ${duel.opponent?.finished ? "· klaar" : "· bezig"}</div>
         </div>
         <div class="duel-opponent-prog">
           <span class="duel-player__label">Tegenstander</span>
@@ -71,8 +71,8 @@ export function renderDuelStudy(): string {
     </div>
 
     <div class="mark-row${duel.flipped ? " visible" : ""}" id="mark-row">
-      <button class="btn-red" id="btn-no">✗ Wist ik niet</button>
-      <button class="btn-green" id="btn-ok">✓ Wist ik het</button>
+      <button class="btn-red" id="btn-no"><i data-lucide="x"></i> Wist ik niet</button>
+      <button class="btn-green" id="btn-ok"><i data-lucide="check"></i> Wist ik het</button>
     </div>
   `;
 }

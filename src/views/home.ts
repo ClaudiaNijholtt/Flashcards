@@ -21,7 +21,7 @@ export function renderHome(): string {
           <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
         </div>
         <div class="deck-card__actions">
-          <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten met dit deck">⚔</button>
+          <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten met dit deck"><i data-lucide="swords"></i></button>
           <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON"><i data-lucide="download"></i></button>
           <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen"><i data-lucide="trash-2"></i></button>
         </div>
@@ -75,11 +75,11 @@ export function renderHome(): string {
     <div class="deck-list">${decksHtml}</div>
 
     <details class="duel-join-details" style="margin-top:1.5rem">
-      <summary class="btn" style="cursor:pointer;list-style:none">⚔ Duel meedoen</summary>
+      <summary class="btn" style="cursor:pointer;list-style:none"><i data-lucide="swords"></i> Duel meedoen</summary>
       <div style="padding:1rem 0 0.5rem">
         <div class="duel-join-form">
           <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-          <button class="btn-primary" id="btn-home-join-duel">Meedoen →</button>
+          <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
         </div>
         <p id="duel-home-error" class="duel-lobby__error hidden"></p>
       </div>

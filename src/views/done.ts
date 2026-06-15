@@ -12,9 +12,9 @@ export function renderDone(): string {
       <h2>Deck afgerond!</h2>
       <p>${state.correct} van de ${total} kaarten goed.</p>
       <div class="done-screen__btns">
-        ${state.missed.length > 0 ? `<button class="btn-red" id="btn-retry">✗ Herhaal ${state.missed.length} gemiste kaart${state.missed.length === 1 ? "" : "en"}</button>` : ""}
-        <button class="btn-primary" id="btn-restart">↺ Opnieuw</button>
-        <button class="btn" id="btn-home">← Decks</button>
+        ${state.missed.length > 0 ? `<button class="btn-red" id="btn-retry"><i data-lucide="x"></i> Herhaal ${state.missed.length} gemiste kaart${state.missed.length === 1 ? "" : "en"}</button>` : ""}
+        <button class="btn-primary" id="btn-restart"><i data-lucide="rotate-ccw"></i> Opnieuw</button>
+        <button class="btn" id="btn-home"><i data-lucide="arrow-left"></i> Decks</button>
       </div>
     </div>
   `;

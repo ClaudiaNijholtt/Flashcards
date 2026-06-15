@@ -9,7 +9,7 @@ export function renderDuelLobby(): string {
 	if (state.duel) {
 		return `
       <div class="duel-lobby">
-        <button class="btn" id="btn-duel-back">← Terug</button>
+        <button class="btn" id="btn-duel-back"><i data-lucide="arrow-left"></i> Terug</button>
         <h2 class="duel-lobby__title">Duel aangemaakt</h2>
         <p class="duel-lobby__sub">Deel deze code met je tegenstander</p>
         <div class="duel-code">${state.duel.code}</div>
@@ -25,12 +25,12 @@ export function renderDuelLobby(): string {
 
 	return `
     <div class="duel-lobby">
-      <button class="btn" id="btn-duel-back">← Terug</button>
+      <button class="btn" id="btn-duel-back"><i data-lucide="arrow-left"></i> Terug</button>
       <h2 class="duel-lobby__title">Duel meedoen</h2>
       <p class="duel-lobby__sub">Voer de code van je vriend in</p>
       <div class="duel-join-form">
         <input type="text" id="duel-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-        <button class="btn-primary" id="btn-join-duel">Meedoen →</button>
+        <button class="btn-primary" id="btn-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
       </div>
       <p id="duel-lobby-error" class="duel-lobby__error hidden"></p>
     </div>
@@ -140,7 +140,7 @@ function bindJoinForm(render: () => void): void {
 		} catch (err) {
 			showLobbyError(err instanceof Error ? err.message : "Kan niet meedoen");
 			btn.disabled = false;
-			btn.textContent = "Meedoen →";
+			btn.textContent = "Meedoen";
 		}
 	});
 }

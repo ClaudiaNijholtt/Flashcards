@@ -33,7 +33,7 @@ export function renderStudy(): string {
 
 	return `
     <div class="study-header">
-      <button class="btn study-header__back" id="btn-back">← Terug</button>
+      <button class="btn study-header__back" id="btn-back"><i data-lucide="arrow-left"></i> Terug</button>
       <div class="study-header__title">${esc(deck.name)}</div>
     </div>
 
@@ -41,8 +41,8 @@ export function renderStudy(): string {
       <span>${state.cardIndex + 1} / ${deck.cards.length}</span>
       <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
       <div class="score-row">
-        <span class="ok">✓ ${state.correct}</span>
-        <span class="no">✗ ${state.wrong}</span>
+        <span class="ok"><i data-lucide="check"></i> ${state.correct}</span>
+        <span class="no"><i data-lucide="x"></i> ${state.wrong}</span>
       </div>
     </div>
 
@@ -71,14 +71,14 @@ export function renderStudy(): string {
     </div>
 
     <div class="mark-row${state.flipped ? " visible" : ""}" id="mark-row">
-      <button class="btn-red" id="btn-no">✗ Wist ik niet</button>
-      <button class="btn-green" id="btn-ok">✓ Wist ik het</button>
+      <button class="btn-red" id="btn-no"><i data-lucide="x"></i> Wist ik niet</button>
+      <button class="btn-green" id="btn-ok"><i data-lucide="check"></i> Wist ik het</button>
     </div>
 
     <div class="nav-row">
-      <button class="btn" id="btn-prev" ${state.cardIndex === 0 ? "disabled" : ""}>← Vorige</button>
-      <button class="btn" id="btn-shuffle">⇄ Schudden</button>
-      <button class="btn" id="btn-next" ${state.cardIndex === deck.cards.length - 1 ? "disabled" : ""}>Volgende →</button>
+      <button class="btn" id="btn-prev" ${state.cardIndex === 0 ? "disabled" : ""}><i data-lucide="arrow-left"></i> Vorige</button>
+      <button class="btn" id="btn-shuffle"><i data-lucide="shuffle"></i> Schudden</button>
+      <button class="btn" id="btn-next" ${state.cardIndex === deck.cards.length - 1 ? "disabled" : ""}>Volgende <i data-lucide="arrow-right"></i></button>
     </div>
 
     <div class="shortcuts" aria-hidden="true">

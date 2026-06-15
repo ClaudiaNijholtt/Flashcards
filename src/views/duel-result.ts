@@ -32,21 +32,21 @@ export function renderDuelResult(): string {
       <div class="duel-result__scores">
         <div class="duel-result__col">
           <div class="duel-result__player">${esc(duel.selfName)}</div>
-          <div class="duel-result__stat ok">✓ ${duel.correct} / ${total}</div>
-          <div class="duel-result__stat no">✗ ${duel.wrong}</div>
+          <div class="duel-result__stat ok"><i data-lucide="check"></i> ${duel.correct} / ${total}</div>
+          <div class="duel-result__stat no"><i data-lucide="x"></i> ${duel.wrong}</div>
           <div class="duel-result__time">${formatTime(duel.selfTimeMs)}</div>
         </div>
         <div class="duel-result__divider">VS</div>
         <div class="duel-result__col">
           <div class="duel-result__player">${esc(opp.name)}</div>
-          <div class="duel-result__stat ok">✓ ${opp.correct} / ${total}</div>
-          <div class="duel-result__stat no">✗ ${opp.wrong}</div>
+          <div class="duel-result__stat ok"><i data-lucide="check"></i> ${opp.correct} / ${total}</div>
+          <div class="duel-result__stat no"><i data-lucide="x"></i> ${opp.wrong}</div>
           <div class="duel-result__time">${formatTime(opp.timeMs)}</div>
         </div>
       </div>
 
       <div class="duel-result__btns">
-        <button class="btn" id="btn-duel-home">← Home</button>
+        <button class="btn" id="btn-duel-home"><i data-lucide="arrow-left"></i> Home</button>
       </div>
     </div>
   `;
