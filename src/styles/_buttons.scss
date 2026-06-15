@@ -19,6 +19,7 @@
 		opacity $transition;
 	outline: none;
 	white-space: nowrap;
+	touch-action: manipulation;
 
 	&:hover {
 		background: color.adjust($bg, $lightness: -2%);

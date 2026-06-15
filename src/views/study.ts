@@ -4,6 +4,7 @@ import type { Deck } from "../types";
 
 let _shakeHandler: ((e: DeviceMotionEvent) => void) | null = null;
 let _shakePermGranted = false;
+let _enterFrom: "left" | "right" | null = null;
 
 export function getActiveDeck(): Deck | undefined {
 	return state.decks.find((d) => d.id === state.activeDeckId);
@@ -27,6 +28,8 @@ export function renderStudy(): string {
 	if (!deck) return "";
 	const card = deck.cards[state.cardIndex];
 	const pct = Math.round((state.cardIndex / deck.cards.length) * 100);
+	const enterClass = _enterFrom ? ` card-drag--enter-${_enterFrom}` : "";
+	_enterFrom = null;
 
 	return `
     <div class="study-header">
@@ -44,21 +47,24 @@ export function renderStudy(): string {
     </div>
 
     <div class="scene" id="scene" role="button" tabindex="0" aria-label="Flashcard">
-      <div class="card-inner${state.flipped ? " flipped" : ""}" id="card">
-        <div class="face front">
-          <div class="face__deck">${esc(deck.name)}</div>
-          <div class="face__q">${esc(card.question)}</div>
-          <div class="face__hint">
-            <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
-            <span class="hint-mobile">Tik om te draaien &nbsp;·&nbsp; veeg ← →</span>
+      <div class="card-peek" id="card-peek" aria-hidden="true"></div>
+      <div class="card-drag${enterClass}" id="card-drag">
+        <div class="card-inner${state.flipped ? " flipped" : ""}" id="card">
+          <div class="face front">
+            <div class="face__deck">${esc(deck.name)}</div>
+            <div class="face__q">${esc(card.question)}</div>
+            <div class="face__hint">
+              <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
+              <span class="hint-mobile">Tik om te draaien &nbsp;·&nbsp; veeg ← →</span>
+            </div>
           </div>
-        </div>
-        <div class="face back">
-          <div class="face__deck">${esc(deck.name)}</div>
-          <div class="face__a">${esc(card.answer)}</div>
-          <div class="face__hint">
-            <span class="hint-desktop"><span class="kbd">1</span> wist niet &nbsp;<span class="kbd">2</span> wist het &nbsp; klik om terug</span>
-            <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → wel &nbsp;·&nbsp; tik om terug</span>
+          <div class="face back">
+            <div class="face__deck">${esc(deck.name)}</div>
+            <div class="face__a">${esc(card.answer)}</div>
+            <div class="face__hint">
+              <span class="hint-desktop"><span class="kbd">1</span> wist niet &nbsp;<span class="kbd">2</span> wist het &nbsp; klik om terug</span>
+              <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → wel &nbsp;·&nbsp; tik om terug</span>
+            </div>
           </div>
         </div>
       </div>
@@ -130,7 +136,7 @@ function attachShakeListener(render: () => void): void {
 		if (!acc) return;
 		const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
 		const now = Date.now();
-		if (mag > 15 && now - lastShake > 1500) {
+		if (mag > 12 && now - lastShake > 800) {
 			lastShake = now;
 			doShuffle(render);
 		}
@@ -194,17 +200,35 @@ export function bindStudyEvents(render: () => void): void {
 				startX = e.touches[0].clientX;
 				startY = e.touches[0].clientY;
 				swipeHandled = false;
+				// Kill any running entry animation so dragging feels instant
+				const cardDrag = document.getElementById("card-drag");
+				if (cardDrag) {
+					cardDrag.classList.remove("card-drag--enter-left", "card-drag--enter-right");
+					cardDrag.style.transition = "none";
+				}
+				const cardPeek = document.getElementById("card-peek");
+				if (cardPeek) cardPeek.style.transition = "none";
 			},
 			{ passive: true },
 		);
 
-		// non-passive so we can prevent scroll during horizontal swipes
 		scene.addEventListener(
 			"touchmove",
 			(e) => {
-				const dx = Math.abs(e.touches[0].clientX - startX);
+				const dx = e.touches[0].clientX - startX;
 				const dy = Math.abs(e.touches[0].clientY - startY);
-				if (dx > dy && dx > 10) e.preventDefault();
+				if (Math.abs(dx) > dy && Math.abs(dx) > 10) {
+					e.preventDefault();
+					const cardDrag = document.getElementById("card-drag");
+					if (cardDrag) {
+						cardDrag.style.transform = `translateX(${dx}px) rotate(${dx * 0.04}deg)`;
+					}
+					const cardPeek = document.getElementById("card-peek");
+					if (cardPeek) {
+						const p = Math.min(Math.abs(dx) / 150, 1);
+						cardPeek.style.transform = `scale(${0.96 + 0.04 * p}) translateY(${6 - 6 * p}px)`;
+					}
+				}
 			},
 			{ passive: false },
 		);
@@ -215,27 +239,62 @@ export function bindStudyEvents(render: () => void): void {
 				const dx = e.changedTouches[0].clientX - startX;
 				const dy = e.changedTouches[0].clientY - startY;
 				const isSwipe = Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5;
-				if (!isSwipe) return;
-				swipeHandled = true;
+
+				const cardDrag = document.getElementById("card-drag");
+				const cardPeek = document.getElementById("card-peek");
+				const snapBack = () => {
+					if (cardDrag) {
+						cardDrag.style.transition = "transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)";
+						cardDrag.style.transform = "";
+					}
+					if (cardPeek) {
+						cardPeek.style.transition = "transform 0.35s ease";
+						cardPeek.style.transform = "";
+					}
+				};
+
+				if (!isSwipe) {
+					snapBack();
+					return;
+				}
 
 				const deck = getActiveDeck();
-				if (!deck) return;
+				const canAct =
+					deck &&
+					(state.flipped ||
+						(dx < 0 && state.cardIndex < deck.cards.length - 1) ||
+						(dx > 0 && state.cardIndex > 0));
 
-				if (state.flipped) {
-					// After flip: swipe right = correct, swipe left = wrong
-					markCard(dx > 0, render);
-				} else {
-					// Before flip: swipe left = next card, swipe right = previous card
-					if (dx < 0 && state.cardIndex < deck.cards.length - 1) {
+				if (!canAct) {
+					snapBack();
+					return;
+				}
+
+				swipeHandled = true;
+
+				// Fly card off screen, then act
+				if (cardDrag) {
+					cardDrag.style.transition = "transform 0.22s ease-in";
+					cardDrag.style.transform = `translateX(${dx > 0 ? 130 : -130}%) rotate(${dx > 0 ? 12 : -12}deg)`;
+				}
+
+				setTimeout(() => {
+					if (state.flipped) {
+						// Right = correct, left = wrong; new card always comes from opposite side
+						_enterFrom = dx > 0 ? "left" : "right";
+						markCard(dx > 0, render);
+					} else if (dx < 0) {
+						_enterFrom = "right";
 						state.cardIndex++;
 						state.flipped = false;
 						render();
-					} else if (dx > 0 && state.cardIndex > 0) {
+					} else {
+						_enterFrom = "left";
 						state.cardIndex--;
 						state.flipped = false;
 						render();
 					}
-				}
+				}, 210);
 			},
 			{ passive: true },
 		);
