@@ -1,0 +1,12 @@
+{
+  "name": "Flashcard Generator",
+  "short_name": "Flashcards",
+  "description": "Upload documenten en genereer flashcards met AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0ede8",
+  "theme_color": "#1a1a18",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

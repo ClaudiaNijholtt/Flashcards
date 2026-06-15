@@ -1,0 +1,453 @@
+// ── Variables ──────────────────────────────────────────────
+$bg:          #f0ede8;
+$surface:     #ffffff;
+$surface-alt: #fafaf8;
+$border:      #e8e5e0;
+$border-mid:  #d0cdc8;
+$text:        #1a1a18;
+$text-muted:  #888880;
+$text-hint:   #bbb;
+$green:       #2e7d52;
+$green-bg:    #f0faf5;
+$green-border:#4caf7d;
+$red:         #b83232;
+$red-bg:      #fff5f5;
+$red-border:  #e05252;
+$radius-sm:   8px;
+$radius-md:   12px;
+$radius-lg:   16px;
+$radius-pill: 20px;
+$shadow-card: 0 2px 8px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+$font:        -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+$transition:  0.15s ease;
+
+// ── Reset ──────────────────────────────────────────────────
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+// ── Base ───────────────────────────────────────────────────
+body {
+  font-family: $font;
+  background: $bg;
+  color: $text;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 4rem;
+}
+
+// ── Typography ─────────────────────────────────────────────
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.3px; }
+h2 { font-size: 18px; font-weight: 600; }
+h3 { font-size: 15px; font-weight: 600; }
+
+p { font-size: 14px; line-height: 1.6; color: $text-muted; }
+
+// ── Buttons ────────────────────────────────────────────────
+%btn-base {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: $radius-md;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid $border-mid;
+  background: $surface;
+  color: $text;
+  transition: background $transition, border-color $transition, opacity $transition;
+  outline: none;
+  white-space: nowrap;
+
+  &:hover { background: darken($bg, 2%); border-color: #aaa; }
+  &:focus-visible { box-shadow: 0 0 0 3px rgba(26,26,24,.2); }
+  &:disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+}
+
+.btn        { @extend %btn-base; }
+.btn-primary {
+  @extend %btn-base;
+  background: $text;
+  color: #fff;
+  border-color: $text;
+  &:hover { background: #333; border-color: #333; }
+}
+.btn-green {
+  @extend %btn-base;
+  background: $green-bg;
+  color: $green;
+  border-color: $green-border;
+  &:hover { background: darken($green-bg, 4%); }
+}
+.btn-red {
+  @extend %btn-base;
+  background: $red-bg;
+  color: $red;
+  border-color: $red-border;
+  &:hover { background: darken($red-bg, 4%); }
+}
+.btn-icon {
+  @extend %btn-base;
+  padding: 8px 12px;
+  color: $text-muted;
+  border-color: $border;
+  &:hover { color: $red; border-color: $red-border; background: $red-bg; }
+}
+
+// ── Kbd badge ──────────────────────────────────────────────
+.kbd {
+  display: inline-block;
+  background: darken($bg, 3%);
+  border: 1px solid $border-mid;
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 5px;
+  color: $text-muted;
+  font-family: monospace;
+  line-height: 1.6;
+}
+
+// ── Header ─────────────────────────────────────────────────
+.app-header {
+  margin-bottom: 1.75rem;
+
+  h1 { margin-bottom: 4px; }
+  p   { font-size: 13px; }
+}
+
+// ── API Key section ────────────────────────────────────────
+.api-key-section {
+  background: $surface;
+  border: 1.5px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: $red-border;
+      &.ok { background: $green-border; }
+    }
+  }
+
+  &__body { display: flex; gap: 8px; }
+
+  input[type="password"], input[type="text"] {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1.5px solid $border-mid;
+    border-radius: $radius-sm;
+    font-size: 14px;
+    font-family: monospace;
+    background: $bg;
+    color: $text;
+    outline: none;
+    &:focus { border-color: $text; }
+  }
+}
+
+// ── Upload zone ────────────────────────────────────────────
+.upload-zone {
+  border: 2px dashed $border-mid;
+  border-radius: $radius-lg;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color $transition, background $transition;
+  margin-bottom: 1.5rem;
+
+  &:hover, &.drag-over {
+    border-color: $text;
+    background: rgba(0,0,0,.02);
+  }
+
+  input[type="file"] { display: none; }
+
+  &__icon { font-size: 32px; margin-bottom: 0.75rem; }
+  &__title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  &__sub { font-size: 13px; color: $text-muted; }
+}
+
+// ── Generating overlay ─────────────────────────────────────
+.generating {
+  text-align: center;
+  padding: 2.5rem 1rem;
+
+  &__spinner {
+    width: 36px; height: 36px;
+    border: 3px solid $border;
+    border-top-color: $text;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  &__msg { font-size: 14px; color: $text-muted; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Deck list ──────────────────────────────────────────────
+.deck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.deck-card {
+  background: $surface;
+  border: 1.5px solid $border;
+  border-radius: $radius-lg;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: border-color $transition, box-shadow $transition;
+  box-shadow: $shadow-card;
+
+  &:hover { border-color: $border-mid; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+
+  &__info { flex: 1; min-width: 0; }
+  &__name { font-size: 15px; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  &__meta { font-size: 12px; color: $text-muted; }
+  &__actions { display: flex; gap: 6px; flex-shrink: 0; }
+}
+
+// ── Study view ─────────────────────────────────────────────
+.study-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+
+  &__back { flex-shrink: 0; }
+  &__title { font-size: 15px; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  color: $text-muted;
+}
+
+.prog-bar {
+  flex: 1;
+  height: 4px;
+  background: $border;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  background: $text;
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+.score-row {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+
+  .ok { color: $green; font-weight: 500; }
+  .no { color: $red;   font-weight: 500; }
+}
+
+// ── Flashcard ──────────────────────────────────────────────
+.scene {
+  perspective: 1200px;
+  height: 260px;
+  margin-bottom: 1.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.42s cubic-bezier(.4,0,.2,1);
+
+  &.flipped { transform: rotateY(180deg); }
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  border-radius: $radius-lg;
+  background: $surface;
+  border: 1.5px solid $border;
+  padding: 2rem 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: $shadow-card;
+
+  &.back {
+    transform: rotateY(180deg);
+    background: $surface-alt;
+  }
+
+  &__deck {
+    position: absolute;
+    top: 14px;
+    left: 0; right: 0;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $text-hint;
+    text-align: center;
+  }
+
+  &__q {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+    max-width: 540px;
+  }
+
+  &__a {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #2a2a28;
+    white-space: pre-line;
+    max-width: 540px;
+  }
+
+  &__hint {
+    position: absolute;
+    bottom: 14px;
+    font-size: 11.5px;
+    color: $text-hint;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}
+
+// ── Action buttons ─────────────────────────────────────────
+.mark-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 1rem;
+  min-height: 44px;
+  visibility: hidden;
+
+  &.visible { visibility: visible; }
+}
+
+// ── Nav row ────────────────────────────────────────────────
+.nav-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+}
+
+// ── Shortcuts legend ───────────────────────────────────────
+.shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  justify-content: center;
+  font-size: 12px;
+  color: $text-hint;
+  margin-bottom: 1rem;
+
+  span { display: flex; align-items: center; gap: 4px; }
+}
+
+// ── Done screen ────────────────────────────────────────────
+.done-screen {
+  text-align: center;
+  padding: 3rem 1rem 2rem;
+  animation: fadeUp 0.3s ease;
+
+  &__pct {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  h2 { margin-bottom: 0.5rem; }
+  p  { margin-bottom: 2rem; }
+
+  &__btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+// ── Toast ──────────────────────────────────────────────────
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  background: $text;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: $radius-pill;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100;
+  transition: opacity 0.3s, transform 0.3s;
+
+  &.error { background: $red; }
+  &.hidden { opacity: 0; transform: translateX(-50%) translateY(8px); }
+}
+
+// ── Utility ────────────────────────────────────────────────
+.hidden { display: none !important; }
+.section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: $text-muted;
+  margin-bottom: 0.75rem;
+}
