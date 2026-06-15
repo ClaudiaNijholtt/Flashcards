@@ -3,6 +3,7 @@
 @use './buttons';
 @use './forms';
 @use './cards';
+@use './auth';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

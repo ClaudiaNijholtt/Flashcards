@@ -3,7 +3,7 @@ import { loadApiKey, loadDecks } from "./storage";
 
 export const state: AppState = {
 	view: "home",
-	decks: loadDecks(),
+	decks: [],
 	activeDeckId: null,
 	cardIndex: 0,
 	flipped: false,
@@ -13,4 +13,5 @@ export const state: AppState = {
 	apiKey: loadApiKey(),
 	isGenerating: false,
 	generationProgress: "",
+	user: null,
 };

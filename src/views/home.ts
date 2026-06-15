@@ -1,6 +1,8 @@
 import { state } from "../state";
 import { esc, formatDate, showToast } from "../helpers";
 import { saveApiKey, saveDecks, deleteDeck } from "../storage";
+import { signOut } from "../auth";
+import { insertDeck, removeDeck, fetchDecks } from "../db";
 import { generateFlashcards } from "../api";
 import type { Deck } from "../types";
 
@@ -24,7 +26,15 @@ export function renderHome(): string {
 					)
 					.join("");
 
+	const userBar = state.user
+		? `<div class="user-bar">
+        <span>Ingelogd als ${esc(state.user.email ?? state.user.id)}</span>
+        <button class="btn" id="btn-logout">Uitloggen</button>
+      </div>`
+		: "";
+
 	return `
+    ${userBar}
     <div class="app-header">
       <h1>Flashcard Generator</h1>
       <p>Upload een document en laat AI flashcards maken</p>
@@ -61,6 +71,13 @@ export function bindHomeEvents(
 	render: () => void,
 	startStudy: (id: string) => void,
 ): void {
+	document.getElementById("btn-logout")?.addEventListener("click", async () => {
+		await signOut();
+		state.user = null;
+		state.decks = [];
+		render();
+	});
+
 	document.getElementById("api-toggle")?.addEventListener("click", () => {
 		document.getElementById("api-body")?.classList.toggle("hidden");
 	});
@@ -118,11 +135,16 @@ export function bindHomeEvents(
 	});
 
 	document.querySelectorAll<HTMLElement>("[data-delete]").forEach((btn) => {
-		btn.addEventListener("click", (e) => {
+		btn.addEventListener("click", async (e) => {
 			e.stopPropagation();
 			const id = btn.dataset.delete!;
 			if (confirm("Deck verwijderen?")) {
-				state.decks = deleteDeck(id, state.decks);
+				if (state.user) {
+					await removeDeck(id);
+					state.decks = state.decks.filter((d) => d.id !== id);
+				} else {
+					state.decks = deleteDeck(id, state.decks);
+				}
 				render();
 			}
 		});
@@ -159,7 +181,12 @@ async function handleFiles(files: File[], render: () => void): Promise<void> {
 			};
 
 			state.decks.push(deck);
-			saveDecks(state.decks);
+			if (state.user) {
+				await insertDeck(deck);
+				state.decks = await fetchDecks();
+			} else {
+				saveDecks(state.decks);
+			}
 			showToast(`${cards.length} flashcards aangemaakt ✓`);
 		} catch (err) {
 			showToast(err instanceof Error ? err.message : "Onbekende fout", true);
