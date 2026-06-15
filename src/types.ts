@@ -10,6 +10,11 @@ export interface Deck {
   createdAt: Date;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string | undefined;
+}
+
 export interface AppState {
   view: 'home' | 'study' | 'done';
   decks: Deck[];
@@ -22,6 +27,7 @@ export interface AppState {
   apiKey: string;
   isGenerating: boolean;
   generationProgress: string;
+  user: AuthUser | null;
 }
 
 export interface AnthropicMessage {
