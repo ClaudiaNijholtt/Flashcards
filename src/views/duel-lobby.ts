@@ -2,6 +2,7 @@ import { state } from "../state";
 import { esc, showToast } from "../helpers";
 import { supabase } from "../supabase";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "../duel-db";
+import { fetchProfile } from "../profile";
 import { duelChannel } from "../duel-channel";
 
 export function renderDuelLobby(): string {
@@ -65,7 +66,7 @@ function waitForOpponent(render: () => void): void {
 		.on(
 			"postgres_changes",
 			{ event: "UPDATE", schema: "public", table: "duels", filter: `id=eq.${duel.id}` },
-			(payload) => {
+			async (payload) => {
 				const row = payload.new as { guest_id: string | null; status: string };
 				if (!row.guest_id || row.status !== "active") return;
 
@@ -74,7 +75,8 @@ function waitForOpponent(render: () => void): void {
 				const gameCh = supabase.channel(`duel:${duel.code}`).subscribe();
 				duelChannel.set(gameCh);
 
-				state.duel!.opponent = { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0 };
+				const guestProfile = await fetchProfile(row.guest_id);
+				state.duel!.opponent = { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0, name: guestProfile?.username ?? "Tegenstander" };
 				state.duel!.startTime = Date.now();
 				state.view = "duel-playing";
 				render();
@@ -112,6 +114,7 @@ function bindJoinForm(render: () => void): void {
 
 			await joinDuelInDb(record.id);
 
+			const hostProfile = await fetchProfile(record.host_id);
 			state.duel = {
 				id: record.id,
 				code: record.code,
@@ -125,7 +128,8 @@ function bindJoinForm(render: () => void): void {
 				selfFinished: false,
 				selfTimeMs: 0,
 				startTime: Date.now(),
-				opponent: { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0 },
+				selfName: state.user?.username ?? state.user?.email?.split("@")[0] ?? "Jij",
+				opponent: { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0, name: hostProfile?.username ?? "Tegenstander" },
 			};
 
 			const gameCh = supabase.channel(`duel:${record.code}`).subscribe();

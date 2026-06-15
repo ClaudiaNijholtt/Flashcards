@@ -29,9 +29,10 @@ export function renderHome(): string {
 					)
 					.join("");
 
+	const displayName = state.user?.username ?? state.user?.email ?? state.user?.id ?? "";
 	const userBar = state.user
 		? `<div class="user-bar">
-        <span>Ingelogd als ${esc(state.user.email ?? state.user.id)}</span>
+        <span>Ingelogd als <strong>${esc(displayName)}</strong></span>
         <button class="btn" id="btn-logout"><i data-lucide="log-out"></i> Uitloggen</button>
       </div>`
 		: "";
