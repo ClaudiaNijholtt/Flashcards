@@ -4,6 +4,7 @@
 @use './forms';
 @use './cards';
 @use './auth';
+@use './duel';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

@@ -4,6 +4,7 @@ import { saveApiKey, saveDecks, deleteDeck } from "../storage";
 import { signOut } from "../auth";
 import { insertDeck, removeDeck, fetchDecks } from "../db";
 import { generateFlashcards } from "../api";
+import { createDuelInDb } from "../duel-db";
 import type { Deck } from "../types";
 
 export function renderHome(): string {
@@ -20,6 +21,7 @@ export function renderHome(): string {
           <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
         </div>
         <div class="deck-card__actions">
+          <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten met dit deck">⚔</button>
           <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON"><i data-lucide="download"></i></button>
           <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen"><i data-lucide="trash-2"></i></button>
         </div>
@@ -70,12 +72,25 @@ export function renderHome(): string {
 
     ${state.decks.length > 0 ? `<div class="section-title">Mijn decks</div>` : ""}
     <div class="deck-list">${decksHtml}</div>
+
+    <details class="duel-join-details" style="margin-top:1.5rem">
+      <summary class="btn" style="cursor:pointer;list-style:none">⚔ Duel meedoen</summary>
+      <div style="padding:1rem 0 0.5rem">
+        <div class="duel-join-form">
+          <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
+          <button class="btn-primary" id="btn-home-join-duel">Meedoen →</button>
+        </div>
+        <p id="duel-home-error" class="duel-lobby__error hidden"></p>
+      </div>
+    </details>
   `;
 }
 
 export function bindHomeEvents(
 	render: () => void,
 	startStudy: (id: string) => void,
+	startDuel: (deckId: string) => void,
+	joinDuel: (code: string) => void,
 ): void {
 	document.getElementById("btn-logout")?.addEventListener("click", async () => {
 		await signOut();
@@ -185,7 +200,8 @@ export function bindHomeEvents(
 
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
-			if ((e.target as HTMLElement).closest("[data-delete]")) return;
+			const t = e.target as HTMLElement;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -204,6 +220,29 @@ export function bindHomeEvents(
 				render();
 			}
 		});
+	});
+
+	// Duel: start a new duel from a deck card
+	document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startDuel(btn.dataset.duel!);
+		});
+	});
+
+	// Duel: join via code in the home "Duel meedoen" section
+	const codeInput = document.getElementById("duel-code-home") as HTMLInputElement | null;
+	codeInput?.addEventListener("input", () => {
+		codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+	});
+	document.getElementById("btn-home-join-duel")?.addEventListener("click", () => {
+		const code = codeInput?.value.trim() ?? "";
+		if (code.length !== 6) {
+			const err = document.getElementById("duel-home-error");
+			if (err) { err.textContent = "Voer een geldige 6-teken code in"; err.classList.remove("hidden"); }
+			return;
+		}
+		joinDuel(code);
 	});
 }
 

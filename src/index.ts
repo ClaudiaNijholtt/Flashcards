@@ -10,6 +10,12 @@ import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, ge
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
 import { renderAuth, bindAuthEvents } from "./views/auth-view";
+import { renderDuelLobby, bindDuelLobbyEvents } from "./views/duel-lobby";
+import { renderDuelStudy, bindDuelStudyEvents } from "./views/duel-study";
+import { renderDuelResult, bindDuelResultEvents } from "./views/duel-result";
+import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./duel-db";
+import { duelChannel } from "./duel-channel";
+import { supabase } from "./supabase";
 import type { AuthUser } from "./types";
 
 function render(): void {
@@ -22,16 +28,88 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render));
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
 		bindStudyEvents(render);
 	} else if (state.view === "done") {
 		app.innerHTML = renderDone();
 		bindDoneEvents(render);
+	} else if (state.view === "duel-lobby") {
+		app.innerHTML = renderDuelLobby();
+		bindDuelLobbyEvents(render);
+	} else if (state.view === "duel-playing") {
+		app.innerHTML = renderDuelStudy();
+		bindDuelStudyEvents(render);
+	} else if (state.view === "duel-result") {
+		app.innerHTML = renderDuelResult();
+		bindDuelResultEvents(render);
 	}
 
 	createIcons({ icons: { Trash2, LogOut, Download, Upload } });
+}
+
+async function handleStartDuel(deckId: string): Promise<void> {
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck) return;
+	try {
+		const row = await createDuelInDb(deck.name, deck.cards);
+		state.duel = {
+			id: row.id,
+			code: row.code,
+			deckName: deck.name,
+			cards: deck.cards,
+			isHost: true,
+			cardIndex: 0,
+			flipped: false,
+			correct: 0,
+			wrong: 0,
+			selfFinished: false,
+			selfTimeMs: 0,
+			startTime: 0,
+			opponent: null,
+		};
+		state.view = "duel-lobby";
+		render();
+	} catch (err) {
+		showToast(err instanceof Error ? err.message : "Duel aanmaken mislukt", true);
+	}
+}
+
+async function handleJoinDuel(code: string): Promise<void> {
+	try {
+		const { data: { user } } = await supabase.auth.getUser();
+		if (!user) throw new Error("Niet ingelogd");
+
+		const record = await fetchDuelByCode(code);
+		if (record.host_id === user.id) throw new Error("Je kunt niet je eigen duel joinen");
+
+		await joinDuelInDb(record.id);
+
+		state.duel = {
+			id: record.id,
+			code: record.code,
+			deckName: record.deck_name,
+			cards: record.cards,
+			isHost: false,
+			cardIndex: 0,
+			flipped: false,
+			correct: 0,
+			wrong: 0,
+			selfFinished: false,
+			selfTimeMs: 0,
+			startTime: Date.now(),
+			opponent: { cardsDone: 0, correct: 0, wrong: 0, finished: false, timeMs: 0 },
+		};
+
+		const gameCh = supabase.channel(`duel:${record.code}`).subscribe();
+		duelChannel.set(gameCh);
+
+		state.view = "duel-playing";
+		render();
+	} catch (err) {
+		showToast(err instanceof Error ? err.message : "Kan niet meedoen aan duel", true);
+	}
 }
 
 async function onLogin(user: AuthUser): Promise<void> {
