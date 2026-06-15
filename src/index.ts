@@ -1,4 +1,5 @@
 import "./styles/main.scss";
+import { createIcons, Trash2, LogOut, Download, Upload } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./helpers";
 import { loadDecks, clearLocalDecks } from "./storage";
@@ -17,10 +18,7 @@ function render(): void {
 	if (!state.user) {
 		app.innerHTML = renderAuth();
 		bindAuthEvents();
-		return;
-	}
-
-	if (state.isGenerating) {
+	} else if (state.isGenerating) {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
@@ -32,6 +30,8 @@ function render(): void {
 		app.innerHTML = renderDone();
 		bindDoneEvents(render);
 	}
+
+	createIcons({ icons: { Trash2, LogOut, Download, Upload } });
 }
 
 async function onLogin(user: AuthUser): Promise<void> {
