@@ -2,6 +2,9 @@ import { state } from "../state";
 import { esc, shuffle } from "../helpers";
 import type { Deck } from "../types";
 
+let _shakeHandler: ((e: DeviceMotionEvent) => void) | null = null;
+let _shakePermGranted = false;
+
 export function getActiveDeck(): Deck | undefined {
 	return state.decks.find((d) => d.id === state.activeDeckId);
 }
@@ -45,12 +48,18 @@ export function renderStudy(): string {
         <div class="face front">
           <div class="face__deck">${esc(deck.name)}</div>
           <div class="face__q">${esc(card.question)}</div>
-          <div class="face__hint"><span class="kbd">Spatie</span> of klik om te draaien</div>
+          <div class="face__hint">
+            <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
+            <span class="hint-mobile">Tik om te draaien &nbsp;·&nbsp; veeg ← →</span>
+          </div>
         </div>
         <div class="face back">
           <div class="face__deck">${esc(deck.name)}</div>
           <div class="face__a">${esc(card.answer)}</div>
-          <div class="face__hint"><span class="kbd">1</span> wist niet &nbsp;<span class="kbd">2</span> wist het &nbsp; klik om terug</div>
+          <div class="face__hint">
+            <span class="hint-desktop"><span class="kbd">1</span> wist niet &nbsp;<span class="kbd">2</span> wist het &nbsp; klik om terug</span>
+            <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → wel &nbsp;·&nbsp; tik om terug</span>
+          </div>
         </div>
       </div>
     </div>
@@ -101,13 +110,145 @@ export function markCard(correct: boolean, render: () => void): void {
 	}
 }
 
+function doShuffle(render: () => void): void {
+	const deck = getActiveDeck();
+	if (!deck) return;
+	deck.cards = shuffle(deck.cards);
+	state.cardIndex = 0;
+	state.flipped = false;
+	state.correct = 0;
+	state.wrong = 0;
+	state.missed = [];
+	render();
+}
+
+function attachShakeListener(render: () => void): void {
+	if (_shakeHandler) return;
+	let lastShake = 0;
+	_shakeHandler = (e: DeviceMotionEvent) => {
+		const acc = e.accelerationIncludingGravity;
+		if (!acc) return;
+		const mag = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
+		const now = Date.now();
+		if (mag > 15 && now - lastShake > 1500) {
+			lastShake = now;
+			doShuffle(render);
+		}
+	};
+	window.addEventListener("devicemotion", _shakeHandler);
+}
+
+function setupShake(render: () => void): void {
+	if (typeof DeviceMotionEvent === "undefined") return;
+	if (_shakeHandler) return;
+
+	// @ts-expect-error — iOS 13+ requires explicit permission from a user gesture
+	if (typeof DeviceMotionEvent.requestPermission === "function") {
+		if (_shakePermGranted) {
+			attachShakeListener(render);
+			return;
+		}
+		// Piggyback on the shuffle button: first tap requests permission, then shake works
+		document.getElementById("btn-shuffle")?.addEventListener(
+			"click",
+			() => {
+				// @ts-expect-error
+				DeviceMotionEvent.requestPermission()
+					.then((result: string) => {
+						if (result === "granted") {
+							_shakePermGranted = true;
+							attachShakeListener(render);
+						}
+					})
+					.catch(() => {});
+			},
+			{ once: true },
+		);
+	} else {
+		attachShakeListener(render);
+	}
+}
+
+export function cleanupShake(): void {
+	if (_shakeHandler) {
+		window.removeEventListener("devicemotion", _shakeHandler);
+		_shakeHandler = null;
+	}
+}
+
 export function bindStudyEvents(render: () => void): void {
 	document.getElementById("btn-back")?.addEventListener("click", () => {
 		state.view = "home";
 		render();
 	});
 
-	document.getElementById("scene")?.addEventListener("click", handleCardClick);
+	const scene = document.getElementById("scene");
+	if (scene) {
+		let startX = 0;
+		let startY = 0;
+		let swipeHandled = false;
+
+		scene.addEventListener(
+			"touchstart",
+			(e) => {
+				startX = e.touches[0].clientX;
+				startY = e.touches[0].clientY;
+				swipeHandled = false;
+			},
+			{ passive: true },
+		);
+
+		// non-passive so we can prevent scroll during horizontal swipes
+		scene.addEventListener(
+			"touchmove",
+			(e) => {
+				const dx = Math.abs(e.touches[0].clientX - startX);
+				const dy = Math.abs(e.touches[0].clientY - startY);
+				if (dx > dy && dx > 10) e.preventDefault();
+			},
+			{ passive: false },
+		);
+
+		scene.addEventListener(
+			"touchend",
+			(e) => {
+				const dx = e.changedTouches[0].clientX - startX;
+				const dy = e.changedTouches[0].clientY - startY;
+				const isSwipe = Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5;
+				if (!isSwipe) return;
+				swipeHandled = true;
+
+				const deck = getActiveDeck();
+				if (!deck) return;
+
+				if (state.flipped) {
+					// After flip: swipe right = correct, swipe left = wrong
+					markCard(dx > 0, render);
+				} else {
+					// Before flip: swipe left = next card, swipe right = previous card
+					if (dx < 0 && state.cardIndex < deck.cards.length - 1) {
+						state.cardIndex++;
+						state.flipped = false;
+						render();
+					} else if (dx > 0 && state.cardIndex > 0) {
+						state.cardIndex--;
+						state.flipped = false;
+						render();
+					}
+				}
+			},
+			{ passive: true },
+		);
+
+		scene.addEventListener("click", () => {
+			if (swipeHandled) {
+				swipeHandled = false;
+				return;
+			}
+			handleCardClick();
+		});
+	}
+
 	document.getElementById("btn-no")?.addEventListener("click", () => markCard(false, render));
 	document.getElementById("btn-ok")?.addEventListener("click", () => markCard(true, render));
 
@@ -126,16 +267,7 @@ export function bindStudyEvents(render: () => void): void {
 			render();
 		}
 	});
-	document.getElementById("btn-shuffle")?.addEventListener("click", () => {
-		const deck = getActiveDeck();
-		if (deck) {
-			deck.cards = shuffle(deck.cards);
-			state.cardIndex = 0;
-			state.flipped = false;
-			state.correct = 0;
-			state.wrong = 0;
-			state.missed = [];
-			render();
-		}
-	});
+	document.getElementById("btn-shuffle")?.addEventListener("click", () => doShuffle(render));
+
+	setupShake(render);
 }
