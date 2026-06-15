@@ -20,8 +20,8 @@ export function renderHome(): string {
           <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
         </div>
         <div class="deck-card__actions">
-          <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON">↓</button>
-          <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen">🗑</button>
+          <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON"><i data-lucide="download"></i></button>
+          <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen"><i data-lucide="trash-2"></i></button>
         </div>
       </div>`,
 					)
@@ -30,7 +30,7 @@ export function renderHome(): string {
 	const userBar = state.user
 		? `<div class="user-bar">
         <span>Ingelogd als ${esc(state.user.email ?? state.user.id)}</span>
-        <button class="btn" id="btn-logout">Uitloggen</button>
+        <button class="btn" id="btn-logout"><i data-lucide="log-out"></i> Uitloggen</button>
       </div>`
 		: "";
 
@@ -65,7 +65,7 @@ export function renderHome(): string {
 
     <div class="import-row">
       <input type="file" id="json-input" accept=".json" style="display:none" />
-      <button class="btn" id="btn-import-json">↑ Deck importeren via JSON</button>
+      <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Deck importeren via JSON</button>
     </div>
 
     ${state.decks.length > 0 ? `<div class="section-title">Mijn decks</div>` : ""}
