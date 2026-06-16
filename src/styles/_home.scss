@@ -519,6 +519,55 @@
 	}
 }
 
+// ── Join game section (sidebar) ───────────────────────────────────────────────
+
+.join-game-section {
+	margin-bottom: 1rem;
+	padding: 0.875rem 1rem;
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+
+	&__label {
+		font-size: 11px;
+		font-weight: 700;
+		color: $text-muted;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		margin-bottom: 0.5rem;
+	}
+
+	&__form {
+		display: flex;
+		gap: 6px;
+	}
+
+	&__input {
+		flex: 1;
+		min-width: 0;
+		padding: 7px 10px;
+		border: 1.5px solid $border-mid;
+		border-radius: $radius-sm;
+		font-size: 15px;
+		font-family: monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		background: $bg;
+		color: $text;
+		outline: none;
+		transition: border-color $transition;
+
+		&:focus { border-color: $text; }
+		&::placeholder {
+			color: $text-hint;
+			font-family: $font;
+			font-size: 13px;
+			letter-spacing: 0;
+			text-transform: none;
+		}
+	}
+}
+
 // ── Add section (sidebar trigger) ────────────────────────────────────────────
 
 .add-section {
