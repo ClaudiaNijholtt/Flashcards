@@ -74,8 +74,8 @@
   }
 
   &--danger {
-    border-color: #e05252;
-    background: #fff5f5;
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
 
     .profile-section__title { color: $red; }
   }

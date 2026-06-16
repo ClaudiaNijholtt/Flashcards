@@ -90,10 +90,15 @@ export function renderHome(): string {
       </div>`
 		: "";
 
+	const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
 	return `
     <div class="topbar">
       <span class="topbar__brand">Flashcards</span>
       <div class="topbar__user">
+        <button class="btn-icon" id="btn-theme" title="${isDark ? "Licht thema" : "Donker thema"}" aria-label="Thema wisselen">
+          <i data-lucide="${isDark ? "sun" : "moon"}"></i>
+        </button>
         <button class="topbar__profile-btn" id="btn-profile" title="Profiel" aria-label="Profiel bekijken">
           <i data-lucide="user"></i>
           <span class="topbar__name">${esc(firstName)}</span>
@@ -146,6 +151,18 @@ export function bindHomeEvents(
 	startStats: (deckId: string) => void,
 	goToProfile: () => void,
 ): void {
+	document.getElementById("btn-theme")?.addEventListener("click", () => {
+		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+		if (isDark) {
+			document.documentElement.removeAttribute("data-theme");
+			localStorage.setItem("theme", "light");
+		} else {
+			document.documentElement.setAttribute("data-theme", "dark");
+			localStorage.setItem("theme", "dark");
+		}
+		render();
+	});
+
 	document.getElementById("btn-profile")?.addEventListener("click", goToProfile);
 
 	document.getElementById("btn-logout")?.addEventListener("click", async () => {

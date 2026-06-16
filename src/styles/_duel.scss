@@ -1,5 +1,4 @@
 @use "./variables" as *;
-@use "sass:color";
 
 // ── Lobby ────────────────────────────────────────────────────────────────────
 
@@ -145,7 +144,7 @@
 }
 
 .prog-fill--opp {
-	background: color.adjust($text, $lightness: 40%);
+	background: var(--prog-fill-opp);
 }
 
 // ── Waiting screen (self finished, waiting for opponent) ─────────────────────

@@ -166,7 +166,7 @@ $orange-border: #e09020;
 
   &--due  { border-color: $orange-border; background: $orange-bg; .stats-card__value { color: $orange; } }
   &--good { border-color: $green-border;  background: $green-bg;  .stats-card__value { color: $green; } }
-  &--best { border-color: #8ab4f8;        background: #f0f4ff;    .stats-card__value { color: #1a56c4; } }
+  &--best { border-color: var(--stats-best-border); background: var(--stats-best-bg); .stats-card__value { color: var(--stats-best-color); } }
 }
 
 // ── Bar chart ────────────────────────────────────────────────────────

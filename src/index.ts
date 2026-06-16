@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
@@ -63,7 +63,7 @@ function render(): void {
 		bindProfileEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun } });
 }
 
 function handleStartStats(deckId: string): void {
@@ -225,6 +225,11 @@ document.addEventListener("keydown", (e) => {
 			break;
 	}
 });
+
+// Apply saved theme before first render to avoid flash
+if (localStorage.getItem("theme") === "dark") {
+	document.documentElement.setAttribute("data-theme", "dark");
+}
 
 // Boot: check session first (handles OAuth redirect tokens automatically),
 // then subscribe to future auth changes
