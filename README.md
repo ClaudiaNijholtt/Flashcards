@@ -1,11 +1,28 @@
 # Flashcard Generator
 
-AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcards genereren. Werkt als PWA op je telefoon.
+AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcards genereren. Studeer met flashcards of multiple choice, duel real-time tegen een vriend, en volg je voortgang via spaced repetition.
+
+## Functies
+
+- **AI-generatie** — upload PDF, TXT of Markdown; Claude maakt er flashcards van
+- **Spaced repetition (SM-2)** — kaarten worden ingepland op basis van hoe goed je ze wist
+- **Streakteller** — vlam-badge toont hoeveel dagen je aaneengesloten hebt geoefend
+- **"Leer vandaag"** — één klik om alleen de kaarten te studeren die vandaag op het schema staan
+- **Solo multiple choice** — kies per sessie tussen flashcards of MC met 4 opties
+- **Duel mode** — real-time competitie met een vriend via een 6-cijferige kamercode (anti-cheat MC)
+- **Statistieken** — sessielijst, staafdiagram, correctheidspercentages per deck
+- **Deck editor** — kaarten toevoegen, bewerken, verwijderen; decknaam hernoemen
+- **Donker thema** — wisselt runtime, voorkeur opgeslagen in localStorage
+- **Deck zoeken** — live filter op naam op de homepagina
+- **Ongedaan maken** — laatste kaartbeoordeling terugdraaien (`U`)
+- **Swipe-gebaren & schudden** — navigeren en scoren op mobiel
+- **PWA** — installeerbaar op iOS en Android
 
 ## Vereisten
 
 - [Node.js](https://nodejs.org/) v18 of nieuwer
 - Een [Anthropic API-sleutel](https://console.anthropic.com/keys)
+- Een [Supabase](https://supabase.com)-project (voor auth, decks, SRS, duels)
 
 ## Installeren & starten
 
@@ -17,7 +34,10 @@ cd flashcard-app
 # 2. Installeer dependencies
 npm install
 
-# 3. Start de dev server (http://localhost:3000)
+# 3. Stel Supabase-omgevingsvariabelen in
+#    Maak src/services/supabase.ts aan met jouw project-URL en anon key
+
+# 4. Start de dev server (http://localhost:3000)
 npm run dev
 ```
 
@@ -35,10 +55,7 @@ npm run build
 3. Push de `/dist` map naar de `gh-pages` branch:
 
 ```bash
-# Eenmalig installeren
 npm install -g gh-pages
-
-# Deployen
 npx gh-pages -d dist
 ```
 
@@ -47,32 +64,63 @@ npx gh-pages -d dist
 
 ## Als PWA installeren op je telefoon
 
-**iPhone (Safari):**
+**iPhone (Safari):** Deel-icoon → "Zet op beginscherm"
 
-1. Open de app-URL in Safari
-2. Tik op het Deel-icoon (vierkantje met pijltje omhoog)
-3. Kies "Zet op beginscherm"
-
-**Android (Chrome):**
-
-1. Open de app-URL in Chrome
-2. Tik op de drie puntjes → "Toevoegen aan startscherm"
+**Android (Chrome):** Drie puntjes → "Toevoegen aan startscherm"
 
 ## Projectstructuur
 
 ```
 flashcard-app/
 ├── public/
-│   ├── index.html        # HTML template
-│   ├── manifest.json     # PWA manifest
+│   ├── index.html            # HTML template
+│   ├── manifest.json         # PWA manifest
 │   └── favicon.svg
 ├── src/
-│   ├── index.ts          # App controller & rendering
-│   ├── api.ts            # Anthropic API client
-│   ├── storage.ts        # localStorage helpers
-│   ├── types.ts          # TypeScript interfaces
+│   ├── index.ts              # App controller & routing
+│   ├── state.ts              # Globale AppState
+│   ├── types.ts              # TypeScript interfaces
+│   ├── services/
+│   │   ├── ai.ts             # Anthropic API client
+│   │   ├── auth.ts           # Supabase auth helpers
+│   │   ├── decks.ts          # CRUD voor decks
+│   │   ├── duels.ts          # Duel aanmaken & joinen
+│   │   ├── profiles.ts       # Gebruikersprofielen
+│   │   ├── realtime.ts       # Supabase Broadcast singleton
+│   │   ├── srs.ts            # Card progress, sessions, streak, due counts
+│   │   └── supabase.ts       # Supabase client
+│   ├── utils/
+│   │   ├── helpers.ts        # shuffle, esc, formatDate, showToast
+│   │   ├── srs-algorithm.ts  # SM-2 berekening, cardId, todayIso
+│   │   └── storage.ts        # localStorage helpers
+│   ├── views/
+│   │   ├── auth-view.ts
+│   │   ├── deck-edit.ts      # Deck- en kaarteditor
+│   │   ├── done.ts           # Sessie-afronding + SRS opslaan
+│   │   ├── duel-lobby.ts
+│   │   ├── duel-result.ts
+│   │   ├── duel-study.ts     # Anti-cheat MC duel
+│   │   ├── generating.ts
+│   │   ├── home.ts           # Homepagina + deck zoeken + streak
+│   │   ├── profile.ts
+│   │   ├── stats.ts
+│   │   ├── study-mode-pick.ts # Flashcard of MC kiezen
+│   │   ├── study.ts          # Studeerscherm (flashcard & MC)
+│   │   └── username-setup.ts
 │   └── styles/
-│       └── main.scss     # Alle stijlen
+│       ├── main.scss
+│       ├── _variables.scss   # CSS custom properties (light + dark)
+│       ├── _buttons.scss
+│       ├── _cards.scss
+│       ├── _duel.scss
+│       ├── _edit.scss
+│       ├── _forms.scss
+│       ├── _home.scss
+│       ├── _profile.scss
+│       ├── _srs.scss
+│       └── _typography.scss
+├── supabase/
+│   └── migrations/           # SQL-migraties
 ├── tsconfig.json
 ├── webpack.config.js
 └── package.json
@@ -86,8 +134,12 @@ flashcard-app/
 | TXT            | Directe upload                               |
 | Markdown (.md) | Directe upload                               |
 
-## Aanpassen
+## Sneltoetsen (studeermodus)
 
-- **Prompt aanpassen**: `src/api.ts` → `FLASHCARD_PROMPT`
-- **Stijlen**: `src/styles/main.scss` — volledig in SCSS met variabelen bovenaan
-- **Nieuw scherm toevoegen**: voeg een view toe in `AppState['view']` en render-functie in `src/index.ts`
+| Toets            | Actie                        |
+| ---------------- | ---------------------------- |
+| `Spatie`         | Kaart omdraaien              |
+| `←` / `→`        | Vorige / volgende kaart      |
+| `1` / `2` / `3` | Niet geweten / twijfel / geweten |
+| `U`              | Laatste beoordeling ongedaan |
+| `S`              | Deck herschudden             |
