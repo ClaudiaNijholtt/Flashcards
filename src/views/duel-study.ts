@@ -1,7 +1,38 @@
 import { state } from "../state";
-import { esc, showToast } from "../utils/helpers";
+import { esc } from "../utils/helpers";
 import { duelChannel } from "../services/realtime";
 import { saveDuelScore } from "../services/duels";
+import type { Flashcard } from "../types";
+
+interface Option { answer: string; isCorrect: boolean; }
+
+// Module-level state — survives re-renders caused by opponent progress updates
+let optionsCardIndex = -1;
+let currentOptions: Option[] = [];
+let selectedOptionIndex: number | null = null;
+let keyHandler: ((e: KeyboardEvent) => void) | null = null;
+
+function buildOptions(cards: Flashcard[], cardIndex: number): Option[] {
+	const correct = cards[cardIndex].answer;
+	const distractors = cards
+		.filter((_, i) => i !== cardIndex)
+		.map((c) => c.answer)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, 3);
+
+	const opts: Option[] = [
+		{ answer: correct, isCorrect: true },
+		...distractors.map((a) => ({ answer: a, isCorrect: false })),
+	];
+	return opts.sort(() => Math.random() - 0.5);
+}
+
+function optionClass(idx: number): string {
+	if (selectedOptionIndex === null) return "";
+	if (currentOptions[idx].isCorrect) return " duel-option--correct";
+	if (idx === selectedOptionIndex) return " duel-option--wrong";
+	return " duel-option--neutral";
+}
 
 export function renderDuelStudy(): string {
 	const duel = state.duel!;
@@ -29,7 +60,16 @@ export function renderDuelStudy(): string {
     `;
 	}
 
+	// Ensure options are stable for this card across re-renders
+	if (duel.cardIndex !== optionsCardIndex) {
+		optionsCardIndex = duel.cardIndex;
+		selectedOptionIndex = null;
+		currentOptions = buildOptions(duel.cards, duel.cardIndex);
+	}
+
 	const card = duel.cards[duel.cardIndex];
+	const answered = selectedOptionIndex !== null;
+	const letters = ["A", "B", "C", "D"];
 
 	return `
     <div class="duel-scoreboard">
@@ -46,33 +86,29 @@ export function renderDuelStudy(): string {
       </div>
     </div>
 
-    <div class="scene" id="scene" role="button" tabindex="0" aria-label="Flashcard">
-      <div class="card-peek" aria-hidden="true"></div>
-      <div class="card-drag" id="card-drag">
-        <div class="card-inner${duel.flipped ? " flipped" : ""}" id="card">
-          <div class="face front">
-            <div class="face__deck">${esc(duel.deckName)}</div>
-            <div class="face__q">${esc(card.question)}</div>
-            <div class="face__hint">
-              <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
-              <span class="hint-mobile">Tik om te draaien</span>
-            </div>
-          </div>
-          <div class="face back">
-            <div class="face__deck">${esc(duel.deckName)}</div>
-            <div class="face__a">${esc(card.answer)}</div>
-            <div class="face__hint">
-              <span class="hint-desktop"><span class="kbd">1</span> wist niet &nbsp;<span class="kbd">2</span> wist het</span>
-              <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → wel</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="duel-question-card">
+      <div class="duel-question-card__deck">${esc(duel.deckName)}</div>
+      <div class="duel-question-card__q">${esc(card.question)}</div>
+      ${!answered ? `<div class="duel-question-card__hint">Kies het juiste antwoord</div>` : ""}
     </div>
 
-    <div class="mark-row${duel.flipped ? " visible" : ""}" id="mark-row">
-      <button class="btn-red" id="btn-no"><i data-lucide="x"></i> Wist ik niet</button>
-      <button class="btn-green" id="btn-ok"><i data-lucide="check"></i> Wist ik het</button>
+    <div class="duel-options${answered ? " duel-options--answered" : ""}">
+      ${currentOptions.map((opt, i) => `
+        <button
+          class="duel-option${optionClass(i)}"
+          data-idx="${i}"
+          ${answered ? "disabled" : ""}
+        >
+          <span class="duel-option__letter">${letters[i]}</span>
+          <span class="duel-option__text">${esc(opt.answer)}</span>
+        </button>
+      `).join("")}
+    </div>
+
+    <div class="mark-row${answered ? " visible" : ""}" id="next-row">
+      <button class="btn-primary" id="btn-next">
+        ${duel.cardIndex < duel.cards.length - 1 ? `Volgende <i data-lucide="arrow-right"></i>` : `Klaar <i data-lucide="check"></i>`}
+      </button>
     </div>
   `;
 }
@@ -103,22 +139,44 @@ export function bindDuelStudyEvents(render: () => void): void {
 		});
 	}
 
-	document.getElementById("scene")?.addEventListener("click", flipDuelCard);
-	document.getElementById("btn-ok")?.addEventListener("click", () => void markDuelCard(true, render));
-	document.getElementById("btn-no")?.addEventListener("click", () => void markDuelCard(false, render));
+	document.querySelectorAll<HTMLButtonElement>(".duel-option").forEach((btn) => {
+		btn.addEventListener("click", () => void selectOption(Number(btn.dataset.idx), render));
+	});
+
+	document.getElementById("btn-next")?.addEventListener("click", () => void advanceDuelCard(render));
+
+	// Keyboard: 1-4 to select option, Space/Enter/→ to advance
+	if (keyHandler) document.removeEventListener("keydown", keyHandler);
+	keyHandler = (e: KeyboardEvent) => {
+		if (state.view !== "duel-playing") {
+			document.removeEventListener("keydown", keyHandler!);
+			keyHandler = null;
+			return;
+		}
+		const tag = (e.target as HTMLElement).tagName.toLowerCase();
+		if (tag === "input" || tag === "textarea") return;
+
+		if (selectedOptionIndex === null) {
+			const idx = ["1", "2", "3", "4"].indexOf(e.key);
+			if (idx !== -1 && idx < currentOptions.length) {
+				e.preventDefault();
+				void selectOption(idx, render);
+			}
+		} else if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") {
+			e.preventDefault();
+			void advanceDuelCard(render);
+		}
+	};
+	document.addEventListener("keydown", keyHandler);
 }
 
-function flipDuelCard(): void {
+async function selectOption(idx: number, render: () => void): Promise<void> {
 	const duel = state.duel;
-	if (!duel || duel.selfFinished) return;
-	duel.flipped = !duel.flipped;
-	document.getElementById("card")?.classList.toggle("flipped", duel.flipped);
-	document.getElementById("mark-row")?.classList.toggle("visible", duel.flipped);
-}
+	if (!duel || selectedOptionIndex !== null || duel.selfFinished) return;
+	if (idx >= currentOptions.length) return;
 
-async function markDuelCard(correct: boolean, render: () => void): Promise<void> {
-	const duel = state.duel;
-	if (!duel || !duel.flipped || duel.selfFinished) return;
+	selectedOptionIndex = idx;
+	const correct = currentOptions[idx].isCorrect;
 
 	if (correct) duel.correct++;
 	else duel.wrong++;
@@ -132,15 +190,22 @@ async function markDuelCard(correct: boolean, render: () => void): Promise<void>
 		payload: { cardsDone, correct: duel.correct, wrong: duel.wrong },
 	});
 
+	render();
+}
+
+async function advanceDuelCard(render: () => void): Promise<void> {
+	const duel = state.duel;
+	if (!duel || selectedOptionIndex === null || duel.selfFinished) return;
+
 	if (duel.cardIndex < duel.cards.length - 1) {
 		duel.cardIndex++;
 		duel.flipped = false;
 		render();
 	} else {
-		// All cards done
 		const timeMs = Date.now() - duel.startTime;
 		duel.selfFinished = true;
 		duel.selfTimeMs = timeMs;
+		const ch = duelChannel.get();
 
 		await saveDuelScore(duel.id, duel.isHost, duel.correct, duel.wrong, timeMs);
 		await ch?.send({
