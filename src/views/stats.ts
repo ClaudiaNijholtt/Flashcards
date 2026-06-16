@@ -38,11 +38,12 @@ async function loadStats(): Promise<void> {
 
 	const cardIds = deck.cards.map((c) => cardId(c));
 	const dueCount = cardIds.filter((id) => isCardDue(progressMap.get(id))).length;
+	const masteredCount = cardIds.filter((id) => (progressMap.get(id)?.intervalDays ?? 0) > 21).length;
 
-	if (bodyEl) bodyEl.innerHTML = buildStatsHtml(sessions, dueCount, deck.cards.length);
+	if (bodyEl) bodyEl.innerHTML = buildStatsHtml(sessions, dueCount, masteredCount);
 }
 
-function buildStatsHtml(sessions: StudySession[], dueCount: number, totalCards: number): string {
+function buildStatsHtml(sessions: StudySession[], dueCount: number, masteredCount: number): string {
 	if (sessions.length === 0) {
 		return `
       <div class="stats-empty">
@@ -97,9 +98,9 @@ function buildStatsHtml(sessions: StudySession[], dueCount: number, totalCards: 
         <div class="stats-card__value">${totalStudied}</div>
         <div class="stats-card__label">kaarten geoefend</div>
       </div>
-      <div class="stats-card">
-        <div class="stats-card__value">${totalCards}</div>
-        <div class="stats-card__label">kaarten in deck</div>
+      <div class="stats-card stats-card--best">
+        <div class="stats-card__value">${masteredCount}</div>
+        <div class="stats-card__label">gemeisterd</div>
       </div>
     </div>
 
