@@ -5,6 +5,7 @@
 @use './cards';
 @use './auth';
 @use './duel';
+@use './home';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
