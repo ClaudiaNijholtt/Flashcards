@@ -3,6 +3,7 @@ import { loadApiKey, loadDecks } from "./utils/storage";
 
 export const state: AppState = {
 	view: "home",
+	studyMode: "flashcard",
 	decks: [],
 	activeDeckId: null,
 	cardIndex: 0,

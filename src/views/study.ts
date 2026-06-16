@@ -1,11 +1,38 @@
 import { state } from "../state";
 import { esc, shuffle } from "../utils/helpers";
 import { cardId } from "../utils/srs-algorithm";
-import type { Deck, Quality } from "../types";
+import type { Deck, Flashcard, Quality } from "../types";
 
 let _shakeHandler: ((e: DeviceMotionEvent) => void) | null = null;
 let _shakePermGranted = false;
 let _enterFrom: "left" | "right" | null = null;
+
+// ── Multiple choice state (stable across re-renders for the same card) ────────
+interface MCOption { answer: string; isCorrect: boolean; }
+let _mcCardIndex = -1;
+let _mcOptions: MCOption[] = [];
+let _mcSelected: number | null = null;
+let _mcKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+
+function buildMCOptions(cards: Flashcard[], idx: number): MCOption[] {
+	const correct = cards[idx].answer;
+	const distractors = cards
+		.filter((_, i) => i !== idx)
+		.map((c) => c.answer)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, 3);
+	return [
+		{ answer: correct, isCorrect: true },
+		...distractors.map((a) => ({ answer: a, isCorrect: false })),
+	].sort(() => Math.random() - 0.5);
+}
+
+function mcOptionClass(i: number): string {
+	if (_mcSelected === null) return "";
+	if (_mcOptions[i].isCorrect) return " duel-option--correct";
+	if (i === _mcSelected) return " duel-option--wrong";
+	return " duel-option--neutral";
+}
 
 export function getActiveDeck(): Deck | undefined {
 	return state.decks.find((d) => d.id === state.activeDeckId);
@@ -13,22 +40,28 @@ export function getActiveDeck(): Deck | undefined {
 
 export function startStudy(deckId: string, render: () => void): void {
 	state.activeDeckId = deckId;
-	state.view = "study";
 	state.cardIndex = 0;
 	state.flipped = false;
 	state.correct = 0;
 	state.wrong = 0;
 	state.missed = [];
 	state.cardQualities = {};
-	state.studyStartTime = Date.now();
+	state.studyStartTime = 0;
 	const deck = getActiveDeck();
 	if (deck) deck.cards = shuffle(deck.cards);
+	state.view = "study-mode-pick";
 	render();
 }
 
 export function renderStudy(): string {
 	const deck = getActiveDeck();
 	if (!deck) return "";
+	return state.studyMode === "multiple-choice"
+		? renderStudyMC(deck)
+		: renderStudyFlashcard(deck);
+}
+
+function renderStudyFlashcard(deck: Deck): string {
 	const card = deck.cards[state.cardIndex];
 	const pct = Math.round((state.cardIndex / deck.cards.length) * 100);
 	const enterClass = _enterFrom ? ` card-drag--enter-${_enterFrom}` : "";
@@ -92,6 +125,123 @@ export function renderStudy(): string {
       <span><span class="kbd">S</span> schudden</span>
     </div>
   `;
+}
+
+function renderStudyMC(deck: Deck): string {
+	if (state.cardIndex !== _mcCardIndex) {
+		_mcCardIndex = state.cardIndex;
+		_mcSelected = null;
+		_mcOptions = buildMCOptions(deck.cards, state.cardIndex);
+	}
+
+	const card = deck.cards[state.cardIndex];
+	const pct = Math.round((state.cardIndex / deck.cards.length) * 100);
+	const answered = _mcSelected !== null;
+	const letters = ["A", "B", "C", "D"];
+
+	return `
+    <div class="study-header">
+      <button class="btn study-header__back" id="btn-back"><i data-lucide="arrow-left"></i> Terug</button>
+      <div class="study-header__title">${esc(deck.name)}</div>
+    </div>
+
+    <div class="progress-row">
+      <span>${state.cardIndex + 1} / ${deck.cards.length}</span>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="score-row">
+        <span class="ok"><i data-lucide="check"></i> ${state.correct}</span>
+        <span class="no"><i data-lucide="x"></i> ${state.wrong}</span>
+      </div>
+    </div>
+
+    <div class="duel-question-card">
+      <div class="duel-question-card__deck">${esc(deck.name)}</div>
+      <div class="duel-question-card__q">${esc(card.question)}</div>
+      ${!answered ? `<div class="duel-question-card__hint">Kies het juiste antwoord</div>` : ""}
+    </div>
+
+    <div class="duel-options${answered ? " duel-options--answered" : ""}">
+      ${_mcOptions.map((opt, i) => `
+        <button class="duel-option${mcOptionClass(i)}" data-idx="${i}" ${answered ? "disabled" : ""}>
+          <span class="duel-option__letter">${letters[i]}</span>
+          <span class="duel-option__text">${esc(opt.answer)}</span>
+        </button>
+      `).join("")}
+    </div>
+
+    <div class="mark-row${answered ? " visible" : ""}" id="next-row">
+      <button class="btn-primary" id="btn-next-mc">
+        ${state.cardIndex < deck.cards.length - 1
+			? `Volgende <i data-lucide="arrow-right"></i>`
+			: `Klaar <i data-lucide="check"></i>`}
+      </button>
+    </div>
+  `;
+}
+
+function bindStudyMCEvents(render: () => void): void {
+	document.querySelectorAll<HTMLButtonElement>(".duel-option").forEach((btn) => {
+		btn.addEventListener("click", () => selectMCOption(Number(btn.dataset.idx), render));
+	});
+
+	document.getElementById("btn-next-mc")?.addEventListener("click", () => advanceMC(render));
+
+	if (_mcKeyHandler) document.removeEventListener("keydown", _mcKeyHandler);
+	_mcKeyHandler = (e: KeyboardEvent) => {
+		if (state.view !== "study" || state.studyMode !== "multiple-choice") {
+			document.removeEventListener("keydown", _mcKeyHandler!);
+			_mcKeyHandler = null;
+			return;
+		}
+		const tag = (e.target as HTMLElement).tagName.toLowerCase();
+		if (tag === "input" || tag === "textarea") return;
+
+		if (_mcSelected === null) {
+			const idx = ["1", "2", "3", "4"].indexOf(e.key);
+			if (idx !== -1 && idx < _mcOptions.length) {
+				e.preventDefault();
+				selectMCOption(idx, render);
+			}
+		} else if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") {
+			e.preventDefault();
+			advanceMC(render);
+		}
+	};
+	document.addEventListener("keydown", _mcKeyHandler);
+}
+
+function selectMCOption(idx: number, render: () => void): void {
+	if (_mcSelected !== null || idx >= _mcOptions.length) return;
+	_mcSelected = idx;
+
+	const deck = getActiveDeck();
+	if (!deck) return;
+	const card = deck.cards[state.cardIndex];
+	const cid = cardId(card);
+	const correct = _mcOptions[idx].isCorrect;
+
+	// quality 2 if correct, 0 if wrong — no "twijfel" for MC
+	const quality: Quality = correct ? 2 : 0;
+	state.cardQualities[cid] = quality;
+	if (correct) state.correct++;
+	else { state.wrong++; state.missed.push(card); }
+
+	render();
+}
+
+function advanceMC(render: () => void): void {
+	if (_mcSelected === null) return;
+	const deck = getActiveDeck();
+	if (!deck) return;
+
+	if (state.cardIndex < deck.cards.length - 1) {
+		state.cardIndex++;
+		state.flipped = false;
+		render();
+	} else {
+		state.view = "done";
+		render();
+	}
 }
 
 export function handleCardClick(): void {
@@ -198,6 +348,11 @@ export function bindStudyEvents(render: () => void): void {
 		state.view = "home";
 		render();
 	});
+
+	if (state.studyMode === "multiple-choice") {
+		bindStudyMCEvents(render);
+		return;
+	}
 
 	const scene = document.getElementById("scene");
 	if (scene) {

@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
@@ -7,6 +7,7 @@ import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { renderHome, bindHomeEvents } from "./views/home";
 import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, getActiveDeck } from "./views/study";
+import { renderStudyModePick, bindStudyModePickEvents } from "./views/study-mode-pick";
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
 import { renderAuth, bindAuthEvents } from "./views/auth-view";
@@ -33,6 +34,9 @@ function render(): void {
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
 		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); });
+	} else if (state.view === "study-mode-pick") {
+		app.innerHTML = renderStudyModePick();
+		bindStudyModePickEvents(render);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
 		bindStudyEvents(render);
@@ -59,7 +63,7 @@ function render(): void {
 		bindProfileEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks } });
 }
 
 function handleStartStats(deckId: string): void {
@@ -171,7 +175,7 @@ async function onLogin(user: AuthUser): Promise<void> {
 document.addEventListener("keydown", (e) => {
 	const tag = (e.target as HTMLElement).tagName.toLowerCase();
 	if (tag === "input" || tag === "textarea") return;
-	if (state.view !== "study") return;
+	if (state.view !== "study" || state.studyMode !== "flashcard") return;
 
 	const deck = getActiveDeck();
 	if (!deck) return;

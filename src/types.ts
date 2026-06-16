@@ -64,7 +64,8 @@ export interface StudySession {
 }
 
 export interface AppState {
-  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile';
+  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile';
+  studyMode: 'flashcard' | 'multiple-choice';
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
   activeDeckId: string | null;

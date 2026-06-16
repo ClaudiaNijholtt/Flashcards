@@ -32,6 +32,71 @@ $orange-border: #e09020;
   .btn-red, .btn-green { flex: 1; }
 }
 
+// ── Study mode picker ─────────────────────────────────────────────────
+.mode-pick {
+  padding-top: 0.5rem;
+
+  &__title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+  }
+}
+
+.mode-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: $surface;
+  border: 1.5px solid $border;
+  border-radius: $radius-lg;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 0.75rem;
+  transition: border-color $transition, background $transition;
+
+  &:hover {
+    border-color: $text;
+    background: $surface-alt;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: $radius-md;
+    background: $border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg { width: 20px; height: 20px; color: $text; }
+  }
+
+  &__body { flex: 1; min-width: 0; }
+
+  &__name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  &__desc {
+    font-size: 13px;
+    color: $text-muted;
+    line-height: 1.4;
+  }
+
+  &__arrow {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: $text-hint;
+  }
+}
+
 // ── Done screen breakdown ─────────────────────────────────────────────
 .done-screen__breakdown {
   display: flex;
