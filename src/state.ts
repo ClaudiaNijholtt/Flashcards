@@ -12,6 +12,7 @@ export const state: AppState = {
 	missed: [],
 	cardQualities: {},
 	studyStartTime: 0,
+	deckPlayCounts: {},
 	apiKey: loadApiKey(),
 	isGenerating: false,
 	generationProgress: "",

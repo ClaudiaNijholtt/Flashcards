@@ -9,6 +9,8 @@ export interface Deck {
   name: string;
   cards: Flashcard[];
   createdAt: Date;
+  creatorUsername?: string;
+  playCount?: number;
 }
 
 export interface AuthUser {
@@ -64,6 +66,7 @@ export interface StudySession {
 export interface AppState {
   view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile';
   decks: Deck[];
+  deckPlayCounts: Record<string, number>;
   activeDeckId: string | null;
   cardIndex: number;
   flipped: boolean;

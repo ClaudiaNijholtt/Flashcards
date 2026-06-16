@@ -4,7 +4,7 @@ import { state } from "./state";
 import { shuffle, showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
 import { getSessionUser, onAuthChange } from "./services/auth";
-import { fetchDecks, insertDeck } from "./services/decks";
+import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { renderHome, bindHomeEvents } from "./views/home";
 import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, getActiveDeck } from "./views/study";
 import { renderDone, bindDoneEvents } from "./views/done";
@@ -72,7 +72,7 @@ async function handleStartDuel(deckId: string): Promise<void> {
 	const deck = state.decks.find((d) => d.id === deckId);
 	if (!deck) return;
 	try {
-		const row = await createDuelInDb(deck.name, deck.cards);
+		const row = await createDuelInDb(deck.name, deck.id, deck.cards);
 		state.duel = {
 			id: row.id,
 			code: row.code,
@@ -163,6 +163,7 @@ async function onLogin(user: AuthUser): Promise<void> {
 	}
 
 	state.decks = await fetchDecks();
+	state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
 	state.view = "home";
 	render();
 }

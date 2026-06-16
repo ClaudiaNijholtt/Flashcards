@@ -17,14 +17,14 @@ function makeCode(): string {
 	return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-export async function createDuelInDb(deckName: string, cards: Flashcard[]): Promise<DuelRow> {
+export async function createDuelInDb(deckName: string, deckId: string, cards: Flashcard[]): Promise<DuelRow> {
 	const { data: { user } } = await supabase.auth.getUser();
 	if (!user) throw new Error("Niet ingelogd");
 
 	const code = makeCode();
 	const { data, error } = await supabase
 		.from("duels")
-		.insert({ code, host_id: user.id, deck_name: deckName, cards })
+		.insert({ code, host_id: user.id, deck_name: deckName, deck_id: deckId, cards })
 		.select()
 		.single();
 

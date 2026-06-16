@@ -2,7 +2,7 @@ import { state } from "../state";
 import { esc, formatDate, showToast } from "../utils/helpers";
 import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
-import { insertDeck, removeDeck, fetchDecks } from "../services/decks";
+import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
@@ -39,7 +39,11 @@ export function renderHome(): string {
             <div class="deck-card__icon" aria-hidden="true"><i data-lucide="book-open"></i></div>
             <div class="deck-card__info">
               <div class="deck-card__name">${esc(deck.name)}</div>
-              <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
+              <div class="deck-card__meta">
+                ${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}
+                ${deck.creatorUsername ? `&nbsp;·&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
+                ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;·&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
+              </div>
             </div>
             <div class="deck-card__actions">
               <button class="btn-primary deck-card__study" data-study="${deck.id}">
@@ -229,10 +233,12 @@ export function bindHomeEvents(
 					answer: c.answer,
 				})),
 				createdAt: new Date(),
+				creatorUsername: state.user?.username ?? undefined,
 			};
 			if (state.user) {
 				await insertDeck(deck);
 				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
 			} else {
 				state.decks.push(deck);
 				saveDecks(state.decks);
@@ -367,12 +373,14 @@ async function handleFiles(files: File[], render: () => void): Promise<void> {
 				name: file.name.replace(/\.[^.]+$/, ""),
 				cards,
 				createdAt: new Date(),
+				creatorUsername: state.user?.username ?? undefined,
 			};
 
 			state.decks.push(deck);
 			if (state.user) {
 				await insertDeck(deck);
 				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
 			} else {
 				saveDecks(state.decks);
 			}

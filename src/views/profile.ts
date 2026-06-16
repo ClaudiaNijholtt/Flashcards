@@ -38,7 +38,7 @@ export function renderProfile(): string {
       </section>
 
       <section class="profile-section" id="section-password">
-        <h3 class="profile-section__title">Wachtwoord wijzigen</h3>
+        <h3 class="profile-section__title" id="pw-section-title">Wachtwoord wijzigen</h3>
         <div class="profile-field profile-field--col">
           <div class="pw-wrap">
             <input type="password" id="pw-new" placeholder="Nieuw wachtwoord" autocomplete="new-password" />
@@ -106,10 +106,18 @@ export function bindProfileEvents(render: () => void): void {
 		}
 	});
 
-	// Hide password section for OAuth-only accounts
+	// For OAuth-only accounts: change title so it's clear they're setting a new password
 	void getAuthProvider().then((provider) => {
 		if (provider !== "email") {
-			document.getElementById("section-password")?.classList.add("hidden");
+			const title = document.getElementById("pw-section-title");
+			if (title) title.textContent = "Wachtwoord instellen";
+			const section = document.getElementById("section-password");
+			if (section) {
+				const hint = document.createElement("p");
+				hint.className = "profile-hint";
+				hint.textContent = "Stel een wachtwoord in zodat je ook met e-mail kunt inloggen.";
+				section.insertBefore(hint, section.querySelector(".profile-field"));
+			}
 		}
 	});
 
