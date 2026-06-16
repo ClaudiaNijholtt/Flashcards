@@ -24,7 +24,8 @@ export function shuffle<T>(arr: T[]): T[] {
 	return a;
 }
 
-export function esc(str: string): string {
+export function esc(str: string | null | undefined): string {
+	if (!str) return "";
 	return str
 		.replace(/&/g, "&amp;")
 		.replace(/</g, "&lt;")
