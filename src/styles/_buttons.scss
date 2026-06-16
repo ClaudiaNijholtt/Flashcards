@@ -75,9 +75,17 @@
 	color: $text-muted;
 	border-color: $border;
 	&:hover {
-		color: $red;
-		border-color: $red-border;
-		background: $red-bg;
+		color: $text;
+		border-color: $border-mid;
+		background: var(--btn-bg-hover);
+	}
+}
+
+.btn-icon--danger {
+	&:hover {
+		color: $red !important;
+		border-color: $red-border !important;
+		background: $red-bg !important;
 	}
 }
 

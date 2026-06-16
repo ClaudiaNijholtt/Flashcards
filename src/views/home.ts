@@ -1,6 +1,6 @@
 import { state } from "../state";
 import { esc, formatDate, showToast } from "../utils/helpers";
-import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
+import { saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
 import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
@@ -129,31 +129,6 @@ export function renderHome(): string {
 			: `<div class="home-empty"><p>Geen decks gevonden${state.deckTagFilter ? ` voor tag "<strong>${esc(state.deckTagFilter)}</strong>"` : state.deckSearch ? ` voor "<strong>${esc(state.deckSearch)}</strong>"` : ""}.</p></div>`}
       </div>`;
 
-	const apiBannerHtml = !hasKey
-		? `<div class="api-banner">
-        <i data-lucide="triangle-alert"></i>
-        <div class="api-banner__body">
-          <div class="api-banner__title">API-sleutel vereist om decks te genereren</div>
-          <div class="api-banner__form">
-            <input type="password" id="api-input" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" />
-            <button class="btn-primary" id="api-save">Opslaan</button>
-          </div>
-        </div>
-      </div>`
-		: "";
-
-	const apiSettingsHtml = hasKey
-		? `<div class="api-settings">
-        <details>
-          <summary><i data-lucide="settings"></i> API-sleutel wijzigen</summary>
-          <div class="api-settings__body">
-            <input type="password" id="api-input" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" />
-            <button class="btn" id="api-save">Opslaan</button>
-          </div>
-        </details>
-      </div>`
-		: "";
-
 	const isDark = document.documentElement.getAttribute("data-theme") === "dark";
 
 	return `
@@ -191,15 +166,11 @@ export function renderHome(): string {
           <p id="duel-home-error" class="duel-lobby__error hidden"></p>
         </div>
 
-        ${apiBannerHtml}
-
         <div class="add-section">
           <button class="btn-primary btn-add-deck-trigger" id="btn-open-add-modal">
             <i data-lucide="plus"></i> Deck toevoegen
           </button>
         </div>
-
-        ${apiSettingsHtml}
       </aside>
 
       <main class="home-main">
@@ -406,18 +377,6 @@ export function bindHomeEvents(
 	};
 	document.addEventListener("keydown", _escapeKeyHandler);
 
-	document.getElementById("api-save")?.addEventListener("click", () => {
-		const input = document.getElementById("api-input") as HTMLInputElement;
-		const key = input.value.trim();
-		if (!key) {
-			showToast("Voer een geldige API-sleutel in", true);
-			return;
-		}
-		state.apiKey = key;
-		saveApiKey(key);
-		showToast("API-sleutel opgeslagen ✓");
-		render();
-	});
 
 	const zone = document.getElementById("upload-zone")!;
 	const fileInput = document.getElementById("file-input") as HTMLInputElement;

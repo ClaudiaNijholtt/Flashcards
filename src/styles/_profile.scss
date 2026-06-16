@@ -93,6 +93,7 @@
     border-radius: $radius-sm;
     font-size: 14px;
     background: $surface-alt;
+    color: $text;
 
     &:focus { outline: none; border-color: $text; }
   }
@@ -154,12 +155,25 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  border: 1.5px solid $red-border;
-  background: $red-bg;
+  border: 1.5px solid var(--danger-border);
+  background: var(--danger-bg);
   color: $red;
   transition: opacity $transition;
 
   svg { width: 15px; height: 15px; }
   &:hover { opacity: 0.8; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// ── API key status indicator ───────────────────────────────────────────
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 0.5rem;
+
+  &--set   { color: $green; }
+  &--unset { color: $red; }
 }

@@ -2,6 +2,7 @@ import { state } from "../state";
 import { esc, showToast } from "../utils/helpers";
 import { updatePassword, deleteAccount, getAuthProvider } from "../services/auth";
 import { saveUsername } from "../services/profiles";
+import { saveApiKey } from "../utils/storage";
 
 export function renderProfile(): string {
 	const user = state.user!;
@@ -35,6 +36,19 @@ export function renderProfile(): string {
         </div>
         <p class="profile-hint">3–20 tekens, letters, cijfers en _</p>
         <div class="profile-error hidden" id="username-error"></div>
+      </section>
+
+      <section class="profile-section">
+        <h3 class="profile-section__title">API-sleutel</h3>
+        <p class="profile-hint">Vereist om decks te genereren via Claude AI.</p>
+        <div class="profile-field">
+          <input type="password" id="api-input-profile" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" spellcheck="false" />
+          <button class="btn-primary" id="btn-save-api">Opslaan</button>
+        </div>
+        <div id="api-error" class="profile-error hidden"></div>
+        <p class="api-status ${state.apiKey ? "api-status--set" : "api-status--unset"}" id="api-status-hint">
+          ${state.apiKey ? "✓ API-sleutel ingesteld" : "Nog geen API-sleutel ingesteld"}
+        </p>
       </section>
 
       <section class="profile-section" id="section-password">
@@ -79,6 +93,19 @@ export function bindProfileEvents(render: () => void): void {
 			// Re-init the icon we just swapped in
 			import("lucide").then(({ createIcons, Eye, EyeOff }) => createIcons({ icons: { Eye, EyeOff } }));
 		});
+	});
+
+	// Save API key
+	document.getElementById("btn-save-api")?.addEventListener("click", () => {
+		const input = document.getElementById("api-input-profile") as HTMLInputElement;
+		const key = input.value.trim();
+		if (!key) { showProfileError("api-error", "Voer een geldige API-sleutel in"); return; }
+		state.apiKey = key;
+		saveApiKey(key);
+		hideProfileError("api-error");
+		showToast("API-sleutel opgeslagen ✓");
+		const hint = document.getElementById("api-status-hint");
+		if (hint) { hint.textContent = "✓ API-sleutel ingesteld"; hint.className = "api-status api-status--set"; }
 	});
 
 	// Change username
