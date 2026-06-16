@@ -1,5 +1,4 @@
 @use "./variables" as *;
-@use "sass:color";
 
 %btn-base {
 	display: inline-flex;
@@ -28,12 +27,12 @@
 	}
 
 	&:hover {
-		background: color.adjust($bg, $lightness: -2%);
-		border-color: #aaa;
+		background: var(--btn-bg-hover);
+		border-color: var(--btn-hover-border);
 	}
 
 	&:focus-visible {
-		box-shadow: 0 0 0 3px rgba(26, 26, 24, 0.2);
+		box-shadow: 0 0 0 3px var(--focus-ring);
 	}
 
 	&:disabled {
@@ -61,18 +60,14 @@
 	background: $green-bg;
 	color: $green;
 	border-color: $green-border;
-	&:hover {
-		background: color.adjust($green-bg, $lightness: -4%);
-	}
+	&:hover { background: #e3f7ed; }
 }
 .btn-red {
 	@extend %btn-base;
 	background: $red-bg;
 	color: $red;
 	border-color: $red-border;
-	&:hover {
-		background: color.adjust($red-bg, $lightness: -4%);
-	}
+	&:hover { background: #ffe8e8; }
 }
 .btn-icon {
 	@extend %btn-base;
@@ -88,7 +83,7 @@
 
 .kbd {
 	display: inline-block;
-	background: color.adjust($bg, $lightness: -3%);
+	background: var(--btn-kbd-bg);
 	border: 1px solid $border-mid;
 	border-radius: 4px;
 	font-size: 10px;

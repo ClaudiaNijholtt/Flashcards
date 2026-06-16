@@ -75,13 +75,77 @@
 	}
 }
 
+// ── Streak badge ─────────────────────────────────────────────────────────────
+
+.streak-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	background: #fff3e0;
+	border: 1.5px solid #f5a623;
+	border-radius: $radius-pill;
+	padding: 3px 10px 3px 7px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #b85c00;
+	margin-left: 0.5rem;
+
+	svg { width: 14px; height: 14px; color: #f5a623; }
+
+	[data-theme="dark"] & {
+		background: #2a1a00;
+		border-color: #b85c00;
+		color: #f5a623;
+	}
+}
+
 // ── Section header ────────────────────────────────────────────────────────────
 
 .section-header {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.5rem;
 	margin-bottom: 0.75rem;
+}
+
+.section-title { font-weight: 700; font-size: 15px; flex: 1; }
+
+// ── Deck search ───────────────────────────────────────────────────────────────
+
+.deck-search-wrap {
+	position: relative;
+	flex-shrink: 0;
+
+	.deck-search__icon {
+		position: absolute;
+		left: 9px;
+		top: 50%;
+		transform: translateY(-50%);
+		width: 14px;
+		height: 14px;
+		color: $text-hint;
+		pointer-events: none;
+	}
+}
+
+.deck-search {
+	padding: 6px 10px 6px 28px;
+	border: 1.5px solid $border-mid;
+	border-radius: $radius-pill;
+	font-size: 13px;
+	background: $surface;
+	color: $text;
+	outline: none;
+	width: 160px;
+	transition: border-color $transition, width $transition;
+
+	&:focus {
+		border-color: $text;
+		width: 200px;
+	}
+
+	&::-webkit-search-cancel-button { cursor: pointer; }
 }
 
 // ── Deck card (new layout) ────────────────────────────────────────────────────
@@ -115,6 +179,34 @@
 		font-size: 13px;
 		padding: 7px 14px;
 		white-space: nowrap;
+	}
+
+	&__due {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 13px;
+		font-weight: 600;
+		padding: 6px 12px;
+		color: #b85c00;
+		border-color: #f5a623;
+		background: #fff3e0;
+		white-space: nowrap;
+
+		svg { width: 13px; height: 13px; color: #f5a623; }
+
+		&:hover {
+			background: #ffe0b2;
+			border-color: #e07800;
+		}
+
+		[data-theme="dark"] & {
+			background: #2a1a00;
+			border-color: #b85c00;
+			color: #f5a623;
+
+			&:hover { background: #3a2500; }
+		}
 	}
 }
 

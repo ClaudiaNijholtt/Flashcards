@@ -47,6 +47,28 @@ export async function getSessionUser(): Promise<AuthUser | null> {
 	return { id: session.user.id, email: session.user.email };
 }
 
+export async function updatePassword(newPassword: string): Promise<void> {
+	const { error } = await supabase.auth.updateUser({ password: newPassword });
+	if (error) throw error;
+}
+
+export async function sendPasswordReset(email: string): Promise<void> {
+	const redirectTo = window.location.origin + window.location.pathname;
+	const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+	if (error) throw error;
+}
+
+export async function deleteAccount(): Promise<void> {
+	const { error } = await supabase.rpc("delete_own_account");
+	if (error) throw error;
+}
+
+export async function getAuthProvider(): Promise<string> {
+	const { data: { user } } = await supabase.auth.getUser();
+	const identity = user?.identities?.[0];
+	return identity?.provider ?? "email";
+}
+
 export function onAuthChange(
 	callback: (user: AuthUser | null) => void,
 ): () => void {

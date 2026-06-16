@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { translateDbError } from "../utils/helpers";
-import type { Deck } from "../types";
+import type { Deck, Flashcard } from "../types";
 
 export async function fetchDecks(): Promise<Deck[]> {
 	const { data, error } = await supabase
@@ -13,7 +13,24 @@ export async function fetchDecks(): Promise<Deck[]> {
 		name: row.name as string,
 		cards: row.cards,
 		createdAt: new Date(row.created_at as string),
+		creatorUsername: (row.creator_username as string | null) ?? undefined,
 	}));
+}
+
+export async function fetchDeckPlayCounts(deckIds: string[]): Promise<Record<string, number>> {
+	if (deckIds.length === 0) return {};
+	const { data } = await supabase
+		.from("duels")
+		.select("deck_id")
+		.in("deck_id", deckIds)
+		.eq("status", "finished");
+
+	const counts: Record<string, number> = {};
+	for (const row of data ?? []) {
+		const id = row.deck_id as string;
+		counts[id] = (counts[id] ?? 0) + 1;
+	}
+	return counts;
 }
 
 export async function insertDeck(deck: Deck): Promise<void> {
@@ -26,6 +43,7 @@ export async function insertDeck(deck: Deck): Promise<void> {
 		name: deck.name,
 		cards: deck.cards,
 		created_at: deck.createdAt,
+		creator_username: deck.creatorUsername ?? null,
 	});
 	if (error) throw new Error(translateDbError(error, "Kon deck niet opslaan"));
 }
@@ -33,4 +51,14 @@ export async function insertDeck(deck: Deck): Promise<void> {
 export async function removeDeck(id: string): Promise<void> {
 	const { error } = await supabase.from("decks").delete().eq("id", id);
 	if (error) throw new Error(translateDbError(error, "Kon deck niet verwijderen"));
+}
+
+export async function renameDeck(id: string, name: string): Promise<void> {
+	const { error } = await supabase.from("decks").update({ name }).eq("id", id);
+	if (error) throw new Error(translateDbError(error, "Kon decknaam niet opslaan"));
+}
+
+export async function updateDeckCards(id: string, cards: Flashcard[]): Promise<void> {
+	const { error } = await supabase.from("decks").update({ cards }).eq("id", id);
+	if (error) throw new Error(translateDbError(error, "Kon kaarten niet opslaan"));
 }

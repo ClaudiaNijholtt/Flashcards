@@ -2,7 +2,7 @@ import { state } from "../state";
 import { esc, formatDate, showToast } from "../utils/helpers";
 import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
-import { insertDeck, removeDeck, fetchDecks } from "../services/decks";
+import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
@@ -10,6 +10,10 @@ export function renderHome(): string {
 	const hasKey = !!state.apiKey;
 	const totalCards = state.decks.reduce((sum, d) => sum + d.cards.length, 0);
 	const firstName = state.user?.username ?? state.user?.email?.split("@")[0] ?? "";
+
+	const streakHtml = state.streak > 0
+		? `<div class="streak-badge"><i data-lucide="flame"></i> ${state.streak} dag${state.streak !== 1 ? "en" : ""} op rij</div>`
+		: "";
 
 	const statsHtml = state.decks.length > 0
 		? `<div class="home-stats">
@@ -22,31 +26,39 @@ export function renderHome(): string {
           <span class="home-stat__num">${totalCards}</span>
           <span class="home-stat__label">kaarten</span>
         </div>
+        ${streakHtml}
       </div>`
-		: "";
+		: streakHtml ? `<div class="home-stats">${streakHtml}</div>` : "";
 
-	const decksHtml = state.decks.length === 0
-		? `<div class="home-empty">
-        <i data-lucide="book-open"></i>
-        <p>Je hebt nog geen decks. Upload een document hieronder om te beginnen.</p>
-      </div>`
-		: `<div class="section-header">
-        <div class="section-title">Mijn decks</div>
-      </div>
-      <div class="deck-list">
-        ${state.decks.map((deck) => `
+	const q = state.deckSearch.toLowerCase();
+	const visibleDecks = q
+		? state.decks.filter((d) => d.name.toLowerCase().includes(q))
+		: state.decks;
+
+	const deckListHtml = (decks: typeof state.decks) => decks.map((deck) => `
           <div class="deck-card" data-id="${deck.id}">
             <div class="deck-card__icon" aria-hidden="true"><i data-lucide="book-open"></i></div>
             <div class="deck-card__info">
               <div class="deck-card__name">${esc(deck.name)}</div>
-              <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
+              <div class="deck-card__meta">
+                ${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}
+                ${deck.creatorUsername ? `&nbsp;·&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
+                ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;·&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
+              </div>
             </div>
             <div class="deck-card__actions">
+              ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
               <button class="btn-primary deck-card__study" data-study="${deck.id}">
                 Leren <i data-lucide="arrow-right"></i>
               </button>
+              <button class="btn-icon" data-stats="${deck.id}" title="Statistieken" aria-label="Statistieken bekijken">
+                <i data-lucide="bar-chart-2"></i>
+              </button>
               <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten">
                 <i data-lucide="swords"></i>
+              </button>
+              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken" aria-label="Deck bewerken">
+                <i data-lucide="pencil"></i>
               </button>
               <button class="btn-icon" data-export="${deck.id}" title="Exporteren" aria-label="Exporteren">
                 <i data-lucide="download"></i>
@@ -55,7 +67,31 @@ export function renderHome(): string {
                 <i data-lucide="trash-2"></i>
               </button>
             </div>
-          </div>`).join("")}
+          </div>`).join("");
+
+	const decksHtml = state.decks.length === 0
+		? `<div class="home-empty">
+        <i data-lucide="book-open"></i>
+        <p>Je hebt nog geen decks. Upload een document hieronder om te beginnen.</p>
+      </div>`
+		: `<div class="section-header">
+        <div class="section-title">Mijn decks</div>
+        <div class="deck-search-wrap">
+          <i data-lucide="search" class="deck-search__icon"></i>
+          <input
+            type="search"
+            id="deck-search"
+            class="deck-search"
+            placeholder="Zoeken…"
+            value="${esc(state.deckSearch)}"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+      <div class="deck-list" id="deck-list">
+        ${visibleDecks.length > 0
+			? deckListHtml(visibleDecks)
+			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`}
       </div>`;
 
 	const apiBannerHtml = !hasKey
@@ -83,11 +119,19 @@ export function renderHome(): string {
       </div>`
 		: "";
 
+	const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
 	return `
     <div class="topbar">
       <span class="topbar__brand">Flashcards</span>
       <div class="topbar__user">
-        <span class="topbar__name">${esc(firstName)}</span>
+        <button class="btn-icon" id="btn-theme" title="${isDark ? "Licht thema" : "Donker thema"}" aria-label="Thema wisselen">
+          <i data-lucide="${isDark ? "sun" : "moon"}"></i>
+        </button>
+        <button class="topbar__profile-btn" id="btn-profile" title="Profiel" aria-label="Profiel bekijken">
+          <i data-lucide="user"></i>
+          <span class="topbar__name">${esc(firstName)}</span>
+        </button>
         <button class="btn-icon" id="btn-logout" title="Uitloggen" aria-label="Uitloggen">
           <i data-lucide="log-out"></i>
         </button>
@@ -133,7 +177,109 @@ export function bindHomeEvents(
 	startStudy: (id: string) => void,
 	startDuel: (deckId: string) => void,
 	joinDuel: (code: string) => void,
+	startStats: (deckId: string) => void,
+	goToProfile: () => void,
+	editDeck: (id: string) => void,
+	startDueStudy: (id: string) => void,
 ): void {
+	document.getElementById("btn-theme")?.addEventListener("click", () => {
+		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+		if (isDark) {
+			document.documentElement.removeAttribute("data-theme");
+			localStorage.setItem("theme", "light");
+		} else {
+			document.documentElement.setAttribute("data-theme", "dark");
+			localStorage.setItem("theme", "dark");
+		}
+		render();
+	});
+
+	document.getElementById("btn-profile")?.addEventListener("click", goToProfile);
+
+	const searchInput = document.getElementById("deck-search") as HTMLInputElement | null;
+	searchInput?.addEventListener("input", () => {
+		state.deckSearch = searchInput.value;
+		const list = document.getElementById("deck-list");
+		if (!list) return;
+		const q = state.deckSearch.toLowerCase();
+		const visible = q ? state.decks.filter((d) => d.name.toLowerCase().includes(q)) : state.decks;
+		list.innerHTML = visible.length > 0
+			? visible.map((deck) => `
+          <div class="deck-card" data-id="${deck.id}">
+            <div class="deck-card__icon"><i data-lucide="book-open"></i></div>
+            <div class="deck-card__info">
+              <div class="deck-card__name">${esc(deck.name)}</div>
+              <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
+            </div>
+            <div class="deck-card__actions">
+              <button class="btn-primary" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
+              <button class="btn-icon" data-stats="${deck.id}"><i data-lucide="bar-chart-2"></i></button>
+              <button class="btn-icon" data-duel="${deck.id}"><i data-lucide="swords"></i></button>
+              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken"><i data-lucide="pencil"></i></button>
+              <button class="btn-icon" data-export="${deck.id}"><i data-lucide="download"></i></button>
+              <button class="btn-icon" data-delete="${deck.id}"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>`).join("")
+			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`;
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil } }));
+		bindDeckCardEvents();
+	});
+
+	function bindDeckCardEvents(): void {
+		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
+			card.addEventListener("click", (e) => {
+				const t = e.target as HTMLElement;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]")) return;
+				startStudy(card.dataset.id!);
+			});
+		});
+		document.querySelectorAll<HTMLElement>("[data-study]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startStudy(btn.dataset.study!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-due]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startDueStudy(btn.dataset.due!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-stats]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startStats(btn.dataset.stats!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startDuel(btn.dataset.duel!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				editDeck(btn.dataset.edit!);
+			});
+		});
+		document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				const deck = state.decks.find((d) => d.id === btn.dataset.export);
+				if (!deck) return;
+				const blob = new Blob([JSON.stringify({ name: deck.name, cards: deck.cards }, null, 2)], { type: "application/json" });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url; a.download = `${deck.name.replace(/[^a-z0-9]/gi, "_")}.json`; a.click();
+				URL.revokeObjectURL(url);
+			});
+		});
+		document.querySelectorAll<HTMLElement>("[data-delete]").forEach((btn) => {
+			btn.addEventListener("click", async (e) => {
+				e.stopPropagation();
+				const id = btn.dataset.delete!;
+				if (!confirm("Deck verwijderen?")) return;
+				try {
+					if (state.user) { await removeDeck(id); state.decks = state.decks.filter((d) => d.id !== id); }
+					else { state.decks = deleteDeck(id, state.decks); }
+					render();
+				} catch (err) {
+					showToast(err instanceof Error ? err.message : "Verwijderen mislukt", true);
+				}
+			});
+		});
+	}
+
 	document.getElementById("btn-logout")?.addEventListener("click", async () => {
 		await signOut();
 		state.user = null;
@@ -213,12 +359,18 @@ export function bindHomeEvents(
 			const deck: Deck = {
 				id: Date.now().toString(),
 				name: data.name,
-				cards: data.cards,
+				cards: data.cards.map((c: { id?: string; question: string; answer: string }) => ({
+					id: c.id ?? crypto.randomUUID(),
+					question: c.question,
+					answer: c.answer,
+				})),
 				createdAt: new Date(),
+				creatorUsername: state.user?.username ?? undefined,
 			};
 			if (state.user) {
 				await insertDeck(deck);
 				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
 			} else {
 				state.decks.push(deck);
 				saveDecks(state.decks);
@@ -234,7 +386,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -243,6 +395,14 @@ export function bindHomeEvents(
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
 			startStudy(btn.dataset.study!);
+		});
+	});
+
+	// Edit deck
+	document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			editDeck(btn.dataset.edit!);
 		});
 	});
 
@@ -263,6 +423,14 @@ export function bindHomeEvents(
 			} catch (err) {
 				showToast(err instanceof Error ? err.message : "Verwijderen mislukt", true);
 			}
+		});
+	});
+
+	// Stats per deck
+	document.querySelectorAll<HTMLElement>("[data-stats]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startStats(btn.dataset.stats!);
 		});
 	});
 
@@ -345,12 +513,14 @@ async function handleFiles(files: File[], render: () => void): Promise<void> {
 				name: file.name.replace(/\.[^.]+$/, ""),
 				cards,
 				createdAt: new Date(),
+				creatorUsername: state.user?.username ?? undefined,
 			};
 
 			state.decks.push(deck);
 			if (state.user) {
 				await insertDeck(deck);
 				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
 			} else {
 				saveDecks(state.decks);
 			}

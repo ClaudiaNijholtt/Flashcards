@@ -1,4 +1,5 @@
 export interface Flashcard {
+  id: string;
   question: string;
   answer: string;
 }
@@ -8,6 +9,8 @@ export interface Deck {
   name: string;
   cards: Flashcard[];
   createdAt: Date;
+  creatorUsername?: string;
+  playCount?: number;
 }
 
 export interface AuthUser {
@@ -40,15 +43,45 @@ export interface ActiveDuel {
   } | null;
 }
 
+export type Quality = 0 | 1 | 2; // 0 = wist het niet, 1 = twijfel, 2 = wist het
+
+export interface CardProgress {
+  cardId: string;
+  deckId: string;
+  dueDate: string;       // YYYY-MM-DD
+  intervalDays: number;
+  easeFactor: number;
+  repetitions: number;
+}
+
+export interface StudySession {
+  deckId: string;
+  studiedAt: Date;
+  cardsStudied: number;
+  correct: number;
+  wrong: number;
+  durationMs: number;
+}
+
 export interface AppState {
-  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup';
+  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit';
+  editDeckId: string | null;
+  studyMode: 'flashcard' | 'multiple-choice';
   decks: Deck[];
+  deckPlayCounts: Record<string, number>;
+  deckSearch: string;
+  streak: number;
+  deckDueCounts: Record<string, number>;
   activeDeckId: string | null;
+  studyCards: Flashcard[] | null;
   cardIndex: number;
   flipped: boolean;
   correct: number;
   wrong: number;
   missed: Flashcard[];
+  cardQualities: Record<string, Quality>; // cardId → quality
+  studyStartTime: number;
+  lastCardSnapshot: { cardIndex: number; correct: number; wrong: number; missed: Flashcard[]; qualities: Record<string, Quality> } | null;
   apiKey: string;
   isGenerating: boolean;
   generationProgress: string;

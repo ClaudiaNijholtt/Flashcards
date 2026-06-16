@@ -2,6 +2,129 @@
 
 All notable changes to this project will be documented here.
 
+## [1.18.0] - 2026-06-16
+
+### Added
+
+- **Streakteller**: vlam-badge in de hero toont hoeveel aaneengesloten dagen je hebt geoefend
+- **"Leer vandaag"-knop** per deck: filtert automatisch op kaarten die vandaag te leren zijn (SRS-schema) en start een sessie alleen met die kaarten
+- `fetchStreak()` en `fetchAllDueCounts()` in `services/srs.ts`
+- `studyCards` in AppState: werkende kaartlijst los van `deck.cards`, zodat `deck.cards` nooit meer gemuteerd wordt
+- Streak en due-counts worden herladen na elke studeersessie (terug naar home) en bij inloggen
+
+### Fixed
+
+- `persistSession` sloeg SRS-voortgang op voor álle kaarten in een deck, ook niet-bestudeerde — nu alleen nog voor kaarten die daadwerkelijk beoordeeld zijn
+- "Herhaal"-knop op het done-scherm werkte niet meer na refactor; gebruikt nu `state.studyCards` correct
+
+---
+
+## [1.17.0] - 2026-06-16
+
+### Added
+
+- **Deck hernoemen**: decknaam direct aanpasbaar in de deck-editor
+- **Kaarten bewerken**: vraag en antwoord van iedere kaart bewerken in de deck-editor
+- **Kaarten verwijderen**: individuele kaarten verwijderen via de deck-editor
+- **Kaarten toevoegen**: nieuwe lege kaart toevoegen onderaan het deck
+- Potlood-icoon per deck op de homepagina opent de editor; wijzigingen worden direct opgeslagen in Supabase
+
+---
+
+## [1.16.0] - 2026-06-16
+
+### Added
+
+- **Ongedaan maken**: laatste kaartbeoordeling terugdraaien via de "Ongedaan"-knop of sneltoets `U`
+- `lastCardSnapshot` in AppState slaat de toestand op vóór elke beoordeling
+
+---
+
+## [1.15.0] - 2026-06-16
+
+### Added
+
+- **Deck zoeken**: zoekbalk in de sectieheader filtert decks live op naam zonder volledige herrender
+
+---
+
+## [1.14.0] - 2026-06-16
+
+### Added
+
+- **Donker thema**: CSS custom properties (`--bg`, `--surface`, `--text`, …) op `:root` en `[data-theme="dark"]` op `<html>`, zodat het thema runtime wisselbaar is zonder hercompilatie
+- Maan/zon-knop in de topbar wisselt het thema; voorkeur opgeslagen in `localStorage`
+- SASS-variabelen verwijzen naar `var(--xxx)` zodat `color.adjust()` op custom properties vermeden wordt
+
+---
+
+## [1.13.0] - 2026-06-16
+
+### Added
+
+- **Solo multiple choice**: bij het starten van een studeersessie kies je nu tussen flashcards of multiple choice
+- MC-modus toont 4 opties (1 correct + 3 afleiders uit het deck), score wordt vastgelegd vóór het antwoord zichtbaar is
+- MC-opties blijven stabiel over herren­ders (tegenstander-voortgang update reset de opties niet)
+- Sneltoetsen in solo MC: `1–4` om te selecteren, `Spatie`/`Enter`/`→` voor volgende kaart
+
+---
+
+## [1.12.0] - 2026-06-16
+
+### Added
+
+- **Anti-cheat duel**: duelmode gebruikt nu verplichte multiple choice — je moet het juiste antwoord aanwijzen, knoppen op de voorkant van de kaart zijn verdwenen
+- Score (goed/fout) wordt vastgelegd zodra je een keuze maakt, vóór het antwoord zichtbaar is
+- 4 opties: 1 correct + 3 willekeurige afleiders uit het deck, per kaart opnieuw geschud
+
+---
+
+## [1.11.0] - 2026-06-16
+
+### Added
+
+- **Deck maker**: gebruikersnaam van de maker staat op elke deckaart
+- **Duel speelcount**: aantal keer dat een deck in een afgerond duel is gebruikt zichtbaar op de deckaart
+- `creator_username` kolom toegevoegd aan `decks`-tabel; `deck_id` kolom toegevoegd aan `duels`-tabel (migratie in `supabase/migrations/20260616_deck_creator_plays.sql`)
+
+### Fixed
+
+- Wachtwoord wijzigen werkte niet voor Google/GitHub-accounts — sectie is nu altijd zichtbaar; voor OAuth-gebruikers verandert de titel naar "Wachtwoord instellen" met een toelichting
+
+---
+
+## [1.10.0] - 2026-06-16
+
+### Added
+
+- **Profielpagina**: klik op je gebruikersnaam in de topbar om je profiel te openen
+- **Gebruikersnaam wijzigen**: direct aanpasbaar op de profielpagina
+- **Wachtwoord wijzigen**: nieuw wachtwoord instellen (verborgen voor OAuth-gebruikers)
+- **Account verwijderen**: permanente accountverwijdering via gevarenzone met bevestigingsdialoog
+- Wachtwoordveld met toon/verberg-knop (oogicoon) op de profielpagina
+- SQL-functie `delete_own_account()` met `SECURITY DEFINER` zodat gebruikers zichzelf veilig kunnen verwijderen vanaf de client (migration in `supabase/migrations/20260616_delete_account.sql`)
+
+---
+
+## [1.9.0] - 2026-06-16
+
+### Added
+
+- **Spaced repetition (SRS)**: cards are scheduled using a simplified SM-2 algorithm — missed cards come back sooner, well-known cards later
+- **Three-button difficulty rating**: "Wist ik niet" / "Twijfel" / "Wist ik het" replaces the two-button system; quality feeds directly into SRS scheduling
+- **Statistics per deck**: bar chart of last 7 sessions, summary cards (sessions, average %, best %, cards studied), full history list; accessible via the chart icon on each deck card
+- **Study session tracking**: duration, correct/wrong/doubt counts saved per session to Supabase
+- Stable card IDs: every card now gets a UUID; existing cards without IDs receive a deterministic hash-based fallback ID
+- Keyboard shortcuts updated: `1` = niet geweten, `2` = twijfel, `3` = geweten
+- New Supabase tables: `card_progress` and `study_sessions` with RLS (migration in `supabase/migrations/20260616_srs.sql`)
+
+### Changed
+
+- Done screen now shows breakdown: geweten / twijfel / niet geweten + session duration
+- "Retry" button on done screen includes both "twijfel" and "niet geweten" cards
+
+---
+
 ## [1.8.0] - 2026-06-16
 
 ### Added

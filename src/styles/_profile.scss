@@ -1,0 +1,165 @@
+@use 'variables' as *;
+
+// ── Topbar profile button ────────────────────────────────────────────
+.topbar__profile-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $text;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: $radius-sm;
+  transition: background $transition;
+
+  svg { width: 16px; height: 16px; }
+
+  &:hover { background: $border; }
+}
+
+// ── Profile view ─────────────────────────────────────────────────────
+.profile-view {
+  padding-bottom: 3rem;
+}
+
+.profile-title {
+  margin: 1.25rem 0 1.25rem;
+  font-size: 1.3rem;
+}
+
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem 1.25rem;
+  margin-bottom: 1.75rem;
+}
+
+.profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: $border;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg { width: 26px; height: 26px; color: $text-muted; }
+}
+
+.profile-info {
+  &__name  { font-weight: 700; font-size: 1.05rem; }
+  &__email { font-size: 13px; color: $text-muted; margin-top: 2px; }
+}
+
+// ── Sections ──────────────────────────────────────────────────────────
+.profile-section {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+
+  &__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.875rem;
+  }
+
+  &--danger {
+    border-color: var(--danger-border);
+    background: var(--danger-bg);
+
+    .profile-section__title { color: $red; }
+  }
+}
+
+// ── Field layouts ─────────────────────────────────────────────────────
+.profile-field {
+  display: flex;
+  gap: 0.5rem;
+
+  input {
+    flex: 1;
+    padding: 0.55rem 0.75rem;
+    border: 1.5px solid $border-mid;
+    border-radius: $radius-sm;
+    font-size: 14px;
+    background: $surface-alt;
+
+    &:focus { outline: none; border-color: $text; }
+  }
+
+  &--col {
+    flex-direction: column;
+  }
+}
+
+.profile-hint {
+  font-size: 12px;
+  color: $text-muted;
+  margin-top: 0.4rem;
+}
+
+.profile-error {
+  font-size: 13px;
+  color: $red;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+// ── Password field with toggle ─────────────────────────────────────────
+.pw-wrap {
+  position: relative;
+  display: flex;
+
+  input {
+    flex: 1;
+    padding-right: 2.5rem;
+  }
+
+  .pw-toggle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 2.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: $text-muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg { width: 16px; height: 16px; }
+    &:hover { color: $text; }
+  }
+}
+
+// ── Danger button ─────────────────────────────────────────────────────
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.55rem 1.1rem;
+  border-radius: $radius-md;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid $red-border;
+  background: $red-bg;
+  color: $red;
+  transition: opacity $transition;
+
+  svg { width: 15px; height: 15px; }
+  &:hover { opacity: 0.8; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}

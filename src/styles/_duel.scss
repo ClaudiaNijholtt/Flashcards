@@ -1,5 +1,4 @@
 @use "./variables" as *;
-@use "sass:color";
 
 // ── Lobby ────────────────────────────────────────────────────────────────────
 
@@ -145,7 +144,7 @@
 }
 
 .prog-fill--opp {
-	background: color.adjust($text, $lightness: 40%);
+	background: var(--prog-fill-opp);
 }
 
 // ── Waiting screen (self finished, waiting for opponent) ─────────────────────
@@ -186,6 +185,104 @@
 		color: $text-muted;
 		white-space: nowrap;
 	}
+}
+
+// ── Multiple choice question card ────────────────────────────────────────────
+
+.duel-question-card {
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+	padding: 1.5rem 1.25rem;
+	margin-bottom: 1rem;
+	text-align: center;
+
+	&__deck {
+		font-size: 11px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: $text-muted;
+		margin-bottom: 0.75rem;
+	}
+
+	&__q {
+		font-size: 1.15rem;
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	&__hint {
+		font-size: 12px;
+		color: $text-hint;
+		margin-top: 0.75rem;
+	}
+}
+
+// ── Multiple choice options ───────────────────────────────────────────────────
+
+.duel-options {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.6rem;
+	margin-bottom: 1rem;
+}
+
+.duel-option {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.6rem;
+	padding: 0.7rem 0.85rem;
+	background: $surface;
+	border: 1.5px solid $border-mid;
+	border-radius: $radius-md;
+	cursor: pointer;
+	text-align: left;
+	font-size: 14px;
+	line-height: 1.35;
+	transition: border-color 0.15s, background 0.15s;
+
+	&:hover:not(:disabled) {
+		border-color: $text;
+		background: $surface-alt;
+	}
+
+	&:disabled { cursor: default; }
+
+	&--correct {
+		border-color: #22c55e !important;
+		background: #f0fdf4 !important;
+		color: #15803d;
+	}
+
+	&--wrong {
+		border-color: $red !important;
+		background: #fff5f5 !important;
+		color: $red;
+	}
+
+	&--neutral {
+		opacity: 0.4;
+	}
+
+	&__letter {
+		flex-shrink: 0;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: $border;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 11px;
+		font-weight: 700;
+		color: $text-muted;
+	}
+
+	&--correct &__letter { background: #22c55e; color: #fff; }
+	&--wrong   &__letter { background: $red;     color: #fff; }
+
+	&__text { flex: 1; }
 }
 
 // ── Result screen ────────────────────────────────────────────────────────────
