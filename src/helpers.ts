@@ -1,3 +1,20 @@
+interface DbError { code?: string; message?: string }
+
+export function translateDbError(err: unknown, context?: string): string {
+	const e = err as DbError;
+	const code = e?.code ?? "";
+	const msg = (e?.message ?? "").toLowerCase();
+
+	if (code === "23505" || msg.includes("unique")) return "Deze waarde is al in gebruik";
+	if (code === "23503" || msg.includes("foreign key")) return "Kan niet verwijderen: er zijn afhankelijke gegevens";
+	if (code === "42501" || msg.includes("row-level security") || msg.includes("permission denied")) return "Geen toegang — controleer of je ingelogd bent";
+	if (code === "PGRST116" || msg.includes("multiple") || msg.includes("no rows")) return context ?? "Niet gevonden";
+	if (code === "PGRST301" || msg.includes("jwt") || msg.includes("token")) return "Sessie verlopen — log opnieuw in";
+	if (msg.includes("network") || msg.includes("fetch")) return "Geen verbinding — controleer je internet";
+	if (context) return context;
+	return "Er is een fout opgetreden, probeer het opnieuw";
+}
+
 export function shuffle<T>(arr: T[]): T[] {
 	const a = [...arr];
 	for (let i = a.length - 1; i > 0; i--) {

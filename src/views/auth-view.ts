@@ -206,5 +206,9 @@ function translateError(err: unknown): string {
 	if (msg.includes("Email not confirmed")) return "Bevestig eerst je e-mailadres via de link in je mailbox.";
 	if (msg.includes("User already registered")) return "Er bestaat al een account met dit e-mailadres.";
 	if (msg.includes("Password should be at least")) return "Wachtwoord moet minimaal 6 tekens bevatten.";
-	return msg;
+	if (msg.includes("Unable to validate email address")) return "Ongeldig e-mailadres.";
+	if (msg.includes("Email rate limit exceeded")) return "Te veel pogingen — wacht even en probeer opnieuw.";
+	if (msg.includes("over_email_send_rate_limit")) return "Te veel e-mails verstuurd — wacht even en probeer opnieuw.";
+	if (msg.includes("network") || msg.includes("fetch")) return "Geen verbinding — controleer je internet.";
+	return "Er is een fout opgetreden, probeer het opnieuw.";
 }

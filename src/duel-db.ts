@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { translateDbError } from "./helpers";
 import type { Flashcard } from "./types";
 
 export interface DuelRow {
@@ -27,7 +28,7 @@ export async function createDuelInDb(deckName: string, cards: Flashcard[]): Prom
 		.select()
 		.single();
 
-	if (error) throw new Error(error.message);
+	if (error) throw new Error(translateDbError(error, "Kon duel niet aanmaken — controleer of de duels-tabel bestaat in Supabase"));
 	return { ...data, cards: data.cards as Flashcard[] };
 }
 
@@ -36,10 +37,11 @@ export async function fetchDuelByCode(code: string): Promise<DuelRow> {
 		.from("duels")
 		.select()
 		.eq("code", code.trim().toUpperCase())
-		.single();
+		.maybeSingle();
 
-	if (error || !data) throw new Error("Duelcode niet gevonden");
-	if (data.status !== "waiting") throw new Error("Dit duel is al gestart of voorbij");
+	if (error) throw new Error(translateDbError(error, "Kon duelcode niet opzoeken"));
+	if (!data) throw new Error("Duelcode niet gevonden — controleer of de code klopt");
+	if (data.status !== "waiting") throw new Error("Dit duel is al gestart of afgelopen");
 	return { ...data, cards: data.cards as Flashcard[] };
 }
 
@@ -53,7 +55,7 @@ export async function joinDuelInDb(duelId: string): Promise<void> {
 		.eq("id", duelId)
 		.eq("status", "waiting");
 
-	if (error) throw new Error(error.message);
+	if (error) throw new Error(translateDbError(error, "Kon niet meedoen aan het duel"));
 }
 
 export async function saveDuelScore(
