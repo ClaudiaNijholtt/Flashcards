@@ -145,10 +145,10 @@ function renderStudyFlashcard(deck: Deck): string {
     </div>
 
     <div class="nav-row">
-      <button class="btn" id="btn-prev" ${state.cardIndex === 0 ? "disabled" : ""}><i data-lucide="arrow-left"></i> Vorige</button>
-      <button class="btn" id="btn-shuffle"><i data-lucide="shuffle"></i> Schudden</button>
-      <button class="btn" id="btn-undo" ${!state.lastCardSnapshot ? "disabled" : ""} title="Beoordeling ongedaan maken"><i data-lucide="rotate-ccw"></i> Ongedaan</button>
-      <button class="btn" id="btn-next" ${state.cardIndex === deck.cards.length - 1 ? "disabled" : ""}>Volgende <i data-lucide="arrow-right"></i></button>
+      <button class="btn" id="btn-prev" ${state.cardIndex === 0 ? "disabled" : ""} title="Vorige"><i data-lucide="arrow-left"></i><span class="nav-label"> Vorige</span></button>
+      <button class="btn" id="btn-shuffle" title="Schudden"><i data-lucide="shuffle"></i><span class="nav-label"> Schudden</span></button>
+      <button class="btn" id="btn-undo" ${!state.lastCardSnapshot ? "disabled" : ""} title="Ongedaan maken"><i data-lucide="rotate-ccw"></i><span class="nav-label"> Ongedaan</span></button>
+      <button class="btn" id="btn-next" ${state.cardIndex === deck.cards.length - 1 ? "disabled" : ""} title="Volgende"><span class="nav-label">Volgende </span><i data-lucide="arrow-right"></i></button>
     </div>
 
     <div class="shortcuts" aria-hidden="true">
