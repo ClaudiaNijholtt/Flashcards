@@ -90,7 +90,10 @@ export function renderHome(): string {
     <div class="topbar">
       <span class="topbar__brand">Flashcards</span>
       <div class="topbar__user">
-        <span class="topbar__name">${esc(firstName)}</span>
+        <button class="topbar__profile-btn" id="btn-profile" title="Profiel" aria-label="Profiel bekijken">
+          <i data-lucide="user"></i>
+          <span class="topbar__name">${esc(firstName)}</span>
+        </button>
         <button class="btn-icon" id="btn-logout" title="Uitloggen" aria-label="Uitloggen">
           <i data-lucide="log-out"></i>
         </button>
@@ -137,7 +140,10 @@ export function bindHomeEvents(
 	startDuel: (deckId: string) => void,
 	joinDuel: (code: string) => void,
 	startStats: (deckId: string) => void,
+	goToProfile: () => void,
 ): void {
+	document.getElementById("btn-profile")?.addEventListener("click", goToProfile);
+
 	document.getElementById("btn-logout")?.addEventListener("click", async () => {
 		await signOut();
 		state.user = null;

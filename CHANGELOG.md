@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [1.10.0] - 2026-06-16
+
+### Added
+
+- **Profielpagina**: klik op je gebruikersnaam in de topbar om je profiel te openen
+- **Gebruikersnaam wijzigen**: direct aanpasbaar op de profielpagina
+- **Wachtwoord wijzigen**: nieuw wachtwoord instellen (verborgen voor OAuth-gebruikers)
+- **Account verwijderen**: permanente accountverwijdering via gevarenzone met bevestigingsdialoog
+- Wachtwoordveld met toon/verberg-knop (oogicoon) op de profielpagina
+- SQL-functie `delete_own_account()` met `SECURITY DEFINER` zodat gebruikers zichzelf veilig kunnen verwijderen vanaf de client (migration in `supabase/migrations/20260616_delete_account.sql`)
+
+---
+
 ## [1.9.0] - 2026-06-16
 
 ### Added

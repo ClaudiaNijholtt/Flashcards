@@ -62,7 +62,7 @@ export interface StudySession {
 }
 
 export interface AppState {
-  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats';
+  view: 'home' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile';
   decks: Deck[];
   activeDeckId: string | null;
   cardIndex: number;
