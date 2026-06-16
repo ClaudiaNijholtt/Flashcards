@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2 } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks, saveUserTags } from "./utils/storage";
@@ -19,6 +19,9 @@ import { renderUsernameSetup, bindUsernameSetupEvents } from "./views/username-s
 import { renderStats, bindStatsEvents } from "./views/stats";
 import { renderProfile, bindProfileEvents } from "./views/profile";
 import { renderDeckEdit, bindDeckEditEvents } from "./views/deck-edit";
+import { renderQuizHost, bindQuizHostEvents, cleanupQuizHost } from "./views/game-host";
+import { renderQuizPlayer, bindQuizPlayerEvents, cleanupQuizPlayer } from "./views/game-player";
+import { createQuizSession, fetchQuizSession } from "./services/game";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./services/duels";
 import { fetchProfile } from "./services/profiles";
 import { duelChannel } from "./services/realtime";
@@ -35,7 +38,7 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); });
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); }, handleStartQuiz);
 	} else if (state.view === "study-mode-pick") {
 		app.innerHTML = renderStudyModePick();
 		bindStudyModePickEvents(render);
@@ -66,9 +69,15 @@ function render(): void {
 	} else if (state.view === "deck-edit") {
 		app.innerHTML = renderDeckEdit();
 		bindDeckEditEvents(render);
+	} else if (state.view === "quiz-host") {
+		app.innerHTML = renderQuizHost();
+		bindQuizHostEvents(render);
+	} else if (state.view === "quiz-player") {
+		app.innerHTML = renderQuizPlayer();
+		bindQuizPlayerEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2 } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users } });
 }
 
 function handleStartStats(deckId: string): void {
@@ -105,8 +114,61 @@ async function handleStartDuel(deckId: string): Promise<void> {
 	}
 }
 
+async function handleStartQuiz(deckId: string): Promise<void> {
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck) return;
+	try {
+		const session = await createQuizSession(deck);
+		state.quiz = {
+			sessionId: session.id,
+			deckName: session.deck_name,
+			questions: session.questions,
+			isHost: true,
+			myPlayerId: null,
+			myNickname: state.user?.username ?? "Host",
+			players: [],
+			phase: "lobby",
+			currentQuestion: -1,
+			questionStartedAt: 0,
+			hasAnsweredCurrent: false,
+			currentAnswers: [],
+		};
+		state.view = "quiz-host";
+		render();
+	} catch (err) {
+		showToast(err instanceof Error ? err.message : "Quiz aanmaken mislukt", true);
+	}
+}
+
 async function handleJoinDuel(code: string): Promise<void> {
 	try {
+		// Try quiz session first
+		const quizSession = await fetchQuizSession(code);
+		if (quizSession) {
+			if (quizSession.status !== "lobby") {
+				showToast("Deze quiz is al gestart of afgelopen", true);
+				return;
+			}
+			state.quiz = {
+				sessionId: quizSession.id,
+				deckName: quizSession.deck_name,
+				questions: quizSession.questions,
+				isHost: false,
+				myPlayerId: null,
+				myNickname: state.user?.username ?? "",
+				players: [],
+				phase: "join",
+				currentQuestion: -1,
+				questionStartedAt: 0,
+				hasAnsweredCurrent: false,
+				currentAnswers: [],
+			};
+			state.view = "quiz-player";
+			render();
+			return;
+		}
+
+		// Fall back to duel
 		const { data: { user } } = await supabase.auth.getUser();
 		if (!user) throw new Error("Niet ingelogd");
 

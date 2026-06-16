@@ -27,4 +27,5 @@ export const state: AppState = {
 	generationProgress: "",
 	user: null,
 	duel: null,
+	quiz: null,
 };

@@ -10,3 +10,14 @@ export const duelChannel = {
 		_ch = null;
 	},
 };
+
+let _qch: RealtimeChannel | null = null;
+
+export const quizChannel = {
+	get: (): RealtimeChannel | null => _qch,
+	set: (ch: RealtimeChannel): void => { _qch = ch; },
+	cleanup: (): void => {
+		_qch?.unsubscribe();
+		_qch = null;
+	},
+};

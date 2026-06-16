@@ -1,0 +1,597 @@
+@use "./variables" as *;
+
+// ── Layout ─────────────────────────────────────────────────────────────────
+
+.quiz-layout {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ── Lobby ──────────────────────────────────────────────────────────────────
+
+.quiz-lobby {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &__header {
+    text-align: center;
+
+    h2 { font-size: 1.5rem; font-weight: 700; }
+  }
+
+  &__deck {
+    color: $text-muted;
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 0.25rem;
+  }
+
+  &__code-wrap {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    padding: 1.25rem;
+    text-align: center;
+    box-shadow: $shadow-card;
+  }
+
+  &__code-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $text-muted;
+    margin-bottom: 0.5rem;
+  }
+
+  &__code-hint {
+    font-size: 0.8rem;
+    color: $text-muted;
+    margin-top: 0.5rem;
+  }
+
+  &__players {
+    background: $surface;
+    border: 1px solid $border;
+    border-radius: $radius-md;
+    padding: 1rem;
+    box-shadow: $shadow-card;
+  }
+
+  &__players-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  &__waiting {
+    color: $text-muted;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  &__waiting-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+  }
+
+  &__spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid $border;
+    border-top-color: $text;
+    border-radius: 50%;
+    animation: quiz-spin 0.8s linear infinite;
+  }
+
+  &__you {
+    text-align: center;
+    font-size: 0.9rem;
+    color: $text-muted;
+  }
+
+  &__count {
+    text-align: center;
+    font-size: 0.85rem;
+    color: $text-muted;
+  }
+
+  &__start {
+    width: 100%;
+    padding: 0.85rem;
+    font-size: 1rem;
+    font-weight: 600;
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+@keyframes quiz-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ── Code display ───────────────────────────────────────────────────────────
+
+.quiz-code-display {
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: $text;
+  user-select: all;
+
+  @media (max-width: 400px) {
+    font-size: 1.9rem;
+  }
+}
+
+// ── Player list ────────────────────────────────────────────────────────────
+
+.quiz-player-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.quiz-player-card {
+  background: $surface-alt;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  padding: 0.5rem 0.75rem;
+  text-align: center;
+
+  &__name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  &__score {
+    font-size: 0.75rem;
+    color: $text-muted;
+  }
+}
+
+// ── Question header ────────────────────────────────────────────────────────
+
+.quiz-question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.quiz-question-num {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: $text-muted;
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────
+
+.quiz-timer {
+  font-size: 2rem;
+  font-weight: 800;
+  color: $text;
+  min-width: 2.5rem;
+  text-align: center;
+  transition: color $transition;
+
+  &--urgent {
+    color: #e74c3c;
+    animation: quiz-pulse 0.5s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes quiz-pulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
+}
+
+// ── Question text ──────────────────────────────────────────────────────────
+
+.quiz-question-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  padding: 1rem;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+}
+
+// ── Answer options ─────────────────────────────────────────────────────────
+
+.quiz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+
+  @media (max-width: 400px) {
+    grid-template-columns: 1fr;
+  }
+
+  &--results {
+    pointer-events: none;
+  }
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 80px;
+  border-radius: $radius-md;
+  border: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity $transition, transform $transition;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  position: relative;
+
+  &__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  &__text {
+    flex: 1;
+    line-height: 1.3;
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  &__count {
+    position: absolute;
+    bottom: 6px;
+    right: 10px;
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  // Color modifiers
+  &--a { background: #e74c3c; }
+  &--b { background: #3498db; }
+  &--c { background: #f39c12; }
+  &--d { background: #2ecc71; }
+
+  &:hover:not(:disabled) {
+    opacity: 0.92;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &--selected {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+  }
+
+  &--correct {
+    opacity: 1 !important;
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px #2ecc71, 0 3px 8px rgba(0,0,0,0.2);
+
+    &::after {
+      content: " ✓";
+      font-weight: 800;
+    }
+  }
+
+  &--wrong {
+    opacity: 0.55 !important;
+
+    &::after {
+      content: " ✗";
+      font-weight: 800;
+    }
+  }
+}
+
+// ── Answer count ───────────────────────────────────────────────────────────
+
+.answer-count {
+  text-align: center;
+  font-size: 0.875rem;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+// ── Correct answer reveal ──────────────────────────────────────────────────
+
+.quiz-correct-answer {
+  background: #f0faf5;
+  border: 1px solid #4caf7d;
+  border-radius: $radius-md;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  [data-theme="dark"] & {
+    background: #0f2418;
+    border-color: #2e7d52;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #2e7d52;
+  }
+
+  &__text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text;
+  }
+}
+
+// ── Answer feedback ────────────────────────────────────────────────────────
+
+.quiz-answer-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-radius: $radius-md;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+
+  &--submitted {
+    background: $surface-alt;
+    border: 1px solid $border;
+    color: $text-muted;
+  }
+
+  &--correct {
+    flex-direction: column;
+    background: #f0faf5;
+    border: 2px solid #4caf7d;
+    color: #2e7d52;
+    padding: 1.5rem;
+
+    [data-theme="dark"] & {
+      background: #0f2418;
+      border-color: #2e7d52;
+    }
+  }
+
+  &--wrong {
+    flex-direction: column;
+    background: #fff5f5;
+    border: 2px solid #e05252;
+    color: #b83232;
+    padding: 1.5rem;
+
+    [data-theme="dark"] & {
+      background: #1f1215;
+      border-color: #7a2424;
+    }
+  }
+
+  &__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  &__text {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
+// ── Answer result (player after-question) ─────────────────────────────────
+
+.quiz-answer-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+
+  &__points {
+    font-size: 1rem;
+  }
+
+  &__earned {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: $text;
+  }
+
+  &__total {
+    font-size: 1rem;
+    color: $text-muted;
+  }
+
+  &__waiting {
+    font-size: 0.875rem;
+    color: $text-muted;
+  }
+}
+
+// ── Leaderboard ────────────────────────────────────────────────────────────
+
+.quiz-leaderboard {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+
+  &__title {
+    font-weight: 700;
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid $border;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &--final {
+    .quiz-leaderboard__title {
+      font-size: 1rem;
+      text-transform: none;
+      letter-spacing: 0;
+      color: $text;
+    }
+  }
+}
+
+.quiz-leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid $border;
+  transition: background $transition;
+
+  &:last-child { border-bottom: none; }
+
+  &--mine {
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+    font-weight: 600;
+  }
+
+  &__rank {
+    min-width: 1.75rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  &__name {
+    flex: 1;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__score {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: $text-muted;
+    white-space: nowrap;
+  }
+}
+
+// ── Join form ──────────────────────────────────────────────────────────────
+
+.quiz-join {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  &__deck {
+    text-align: center;
+    color: $text-muted;
+    font-size: 0.9rem;
+    margin-top: -0.75rem;
+  }
+
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid $border-mid;
+    border-radius: $radius-sm;
+    font-size: 1rem;
+    background: $surface;
+    color: $text;
+
+    &:focus {
+      outline: none;
+      border-color: $text;
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+  }
+}
+
+// ── Final screen ───────────────────────────────────────────────────────────
+
+.quiz-final {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    text-align: center;
+  }
+
+  &__deck {
+    text-align: center;
+    color: $text-muted;
+    font-size: 0.9rem;
+    margin-top: -0.75rem;
+  }
+
+  &__my-rank {
+    text-align: center;
+    font-size: 1rem;
+    color: $text-muted;
+  }
+}
+
+// ── Back button ────────────────────────────────────────────────────────────
+
+.quiz-back {
+  width: 100%;
+  color: $text-muted;
+}
