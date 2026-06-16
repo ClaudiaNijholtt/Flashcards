@@ -222,6 +222,12 @@
 .deck-more {
 	position: relative;
 
+	> .btn-icon:hover {
+		color: $text-muted;
+		border-color: $border-mid;
+		background: $bg;
+	}
+
 	&__menu {
 		position: absolute;
 		right: 0;

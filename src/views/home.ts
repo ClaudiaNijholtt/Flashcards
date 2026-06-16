@@ -6,7 +6,7 @@ import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts } from "../serv
 import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
-let _outsideClickHandler: (() => void) | null = null;
+let _outsideClickHandler: ((e: Event) => void) | null = null;
 
 function deckMoreHtml(id: string): string {
 	return `
@@ -288,9 +288,6 @@ export function bindHomeEvents(
 				if (!isOpen && menu) menu.classList.remove("hidden");
 			});
 		});
-		document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((menu) => {
-			menu.addEventListener("click", (e) => e.stopPropagation());
-		});
 		document.querySelectorAll<HTMLElement>(".deck-more__item").forEach((item) => {
 			item.addEventListener("click", () => item.closest<HTMLElement>(".deck-more__menu")?.classList.add("hidden"));
 		});
@@ -461,10 +458,14 @@ export function bindHomeEvents(
 	// More menu: initial render binding
 	bindMoreButtons();
 
-	// Outside click closes all open menus
-	if (_outsideClickHandler) document.removeEventListener("click", _outsideClickHandler);
-	_outsideClickHandler = () => document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((m) => m.classList.add("hidden"));
-	document.addEventListener("click", _outsideClickHandler);
+	// Outside click closes all open menus (capture so it fires before item handlers)
+	if (_outsideClickHandler) document.removeEventListener("click", _outsideClickHandler, { capture: true });
+	_outsideClickHandler = (e: Event) => {
+		const t = e.target as HTMLElement;
+		if (t.closest(".deck-more__menu") || t.closest("[data-more-btn]")) return;
+		document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((m) => m.classList.add("hidden"));
+	};
+	document.addEventListener("click", _outsideClickHandler, { capture: true });
 
 	// Duel: join toggle
 	document.getElementById("btn-join-duel-toggle")?.addEventListener("click", () => {

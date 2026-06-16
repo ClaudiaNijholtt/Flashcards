@@ -24,11 +24,11 @@ export async function createDuelInDb(deckName: string, deckId: string, cards: Fl
 	const code = makeCode();
 	const { data, error } = await supabase
 		.from("duels")
-		.insert({ code, host_id: user.id, deck_name: deckName, deck_id: deckId, cards })
+		.insert({ code, host_id: user.id, deck_name: deckName, cards })
 		.select()
 		.single();
 
-	if (error) throw new Error(translateDbError(error, "Kon duel niet aanmaken — controleer of de duels-tabel bestaat in Supabase"));
+	if (error) throw new Error(translateDbError(error, "Kon duel niet aanmaken"));
 	return { ...data, cards: data.cards as Flashcard[] };
 }
 
