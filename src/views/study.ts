@@ -1,6 +1,7 @@
 import { state } from "../state";
-import { esc, shuffle } from "../utils/helpers";
-import { cardId } from "../utils/srs-algorithm";
+import { esc, shuffle, showToast } from "../utils/helpers";
+import { cardId, todayIso } from "../utils/srs-algorithm";
+import { fetchCardProgressMap } from "../services/srs";
 import type { Deck, Flashcard, Quality } from "../types";
 
 let _shakeHandler: ((e: DeviceMotionEvent) => void) | null = null;
@@ -35,10 +36,14 @@ function mcOptionClass(i: number): string {
 }
 
 export function getActiveDeck(): Deck | undefined {
-	return state.decks.find((d) => d.id === state.activeDeckId);
+	const deck = state.decks.find((d) => d.id === state.activeDeckId);
+	if (!deck) return undefined;
+	if (state.studyCards !== null) return { ...deck, cards: state.studyCards };
+	return deck;
 }
 
 export function startStudy(deckId: string, render: () => void): void {
+	const deck = state.decks.find((d) => d.id === deckId);
 	state.activeDeckId = deckId;
 	state.cardIndex = 0;
 	state.flipped = false;
@@ -48,8 +53,34 @@ export function startStudy(deckId: string, render: () => void): void {
 	state.cardQualities = {};
 	state.studyStartTime = 0;
 	state.lastCardSnapshot = null;
-	const deck = getActiveDeck();
-	if (deck) deck.cards = shuffle(deck.cards);
+	state.studyCards = deck ? shuffle([...deck.cards]) : null;
+	state.view = "study-mode-pick";
+	render();
+}
+
+export async function startDueStudy(deckId: string, render: () => void): Promise<void> {
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck) return;
+	const progressMap = await fetchCardProgressMap(deckId);
+	const today = todayIso();
+	const dueCards = deck.cards.filter((c) => {
+		const p = progressMap.get(cardId(c));
+		return !p || p.dueDate <= today;
+	});
+	if (dueCards.length === 0) {
+		showToast("Alle kaarten al geleerd vandaag!");
+		return;
+	}
+	state.activeDeckId = deckId;
+	state.cardIndex = 0;
+	state.flipped = false;
+	state.correct = 0;
+	state.wrong = 0;
+	state.missed = [];
+	state.cardQualities = {};
+	state.studyStartTime = 0;
+	state.lastCardSnapshot = null;
+	state.studyCards = shuffle([...dueCards]);
 	state.view = "study-mode-pick";
 	render();
 }
@@ -301,10 +332,10 @@ export function undoLastCard(render: () => void): void {
 	render();
 }
 
-function doShuffle(render: () => void): void {
-	const deck = getActiveDeck();
+export function reshuffleStudy(render: () => void): void {
+	const deck = state.decks.find((d) => d.id === state.activeDeckId);
 	if (!deck) return;
-	deck.cards = shuffle(deck.cards);
+	state.studyCards = shuffle([...deck.cards]);
 	state.cardIndex = 0;
 	state.flipped = false;
 	state.correct = 0;
@@ -325,7 +356,7 @@ function attachShakeListener(render: () => void): void {
 		const now = Date.now();
 		if (mag > 15 && now - lastShake > 1000) {
 			lastShake = now;
-			doShuffle(render);
+			reshuffleStudy(render);
 		}
 	};
 	window.addEventListener("devicemotion", _shakeHandler);
@@ -516,7 +547,7 @@ export function bindStudyEvents(render: () => void): void {
 			render();
 		}
 	});
-	document.getElementById("btn-shuffle")?.addEventListener("click", () => doShuffle(render));
+	document.getElementById("btn-shuffle")?.addEventListener("click", () => reshuffleStudy(render));
 	document.getElementById("btn-undo")?.addEventListener("click", () => undoLastCard(render));
 
 	setupShake(render);

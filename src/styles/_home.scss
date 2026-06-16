@@ -75,6 +75,30 @@
 	}
 }
 
+// ── Streak badge ─────────────────────────────────────────────────────────────
+
+.streak-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	background: #fff3e0;
+	border: 1.5px solid #f5a623;
+	border-radius: $radius-pill;
+	padding: 3px 10px 3px 7px;
+	font-size: 13px;
+	font-weight: 600;
+	color: #b85c00;
+	margin-left: 0.5rem;
+
+	svg { width: 14px; height: 14px; color: #f5a623; }
+
+	[data-theme="dark"] & {
+		background: #2a1a00;
+		border-color: #b85c00;
+		color: #f5a623;
+	}
+}
+
 // ── Section header ────────────────────────────────────────────────────────────
 
 .section-header {
@@ -155,6 +179,34 @@
 		font-size: 13px;
 		padding: 7px 14px;
 		white-space: nowrap;
+	}
+
+	&__due {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: 13px;
+		font-weight: 600;
+		padding: 6px 12px;
+		color: #b85c00;
+		border-color: #f5a623;
+		background: #fff3e0;
+		white-space: nowrap;
+
+		svg { width: 13px; height: 13px; color: #f5a623; }
+
+		&:hover {
+			background: #ffe0b2;
+			border-color: #e07800;
+		}
+
+		[data-theme="dark"] & {
+			background: #2a1a00;
+			border-color: #b85c00;
+			color: #f5a623;
+
+			&:hover { background: #3a2500; }
+		}
 	}
 }
 

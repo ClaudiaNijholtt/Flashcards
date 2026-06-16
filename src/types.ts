@@ -70,7 +70,10 @@ export interface AppState {
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
   deckSearch: string;
+  streak: number;
+  deckDueCounts: Record<string, number>;
   activeDeckId: string | null;
+  studyCards: Flashcard[] | null;
   cardIndex: number;
   flipped: boolean;
   correct: number;

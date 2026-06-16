@@ -11,6 +11,10 @@ export function renderHome(): string {
 	const totalCards = state.decks.reduce((sum, d) => sum + d.cards.length, 0);
 	const firstName = state.user?.username ?? state.user?.email?.split("@")[0] ?? "";
 
+	const streakHtml = state.streak > 0
+		? `<div class="streak-badge"><i data-lucide="flame"></i> ${state.streak} dag${state.streak !== 1 ? "en" : ""} op rij</div>`
+		: "";
+
 	const statsHtml = state.decks.length > 0
 		? `<div class="home-stats">
         <div class="home-stat">
@@ -22,8 +26,9 @@ export function renderHome(): string {
           <span class="home-stat__num">${totalCards}</span>
           <span class="home-stat__label">kaarten</span>
         </div>
+        ${streakHtml}
       </div>`
-		: "";
+		: streakHtml ? `<div class="home-stats">${streakHtml}</div>` : "";
 
 	const q = state.deckSearch.toLowerCase();
 	const visibleDecks = q
@@ -42,6 +47,7 @@ export function renderHome(): string {
               </div>
             </div>
             <div class="deck-card__actions">
+              ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
               <button class="btn-primary deck-card__study" data-study="${deck.id}">
                 Leren <i data-lucide="arrow-right"></i>
               </button>
@@ -174,6 +180,7 @@ export function bindHomeEvents(
 	startStats: (deckId: string) => void,
 	goToProfile: () => void,
 	editDeck: (id: string) => void,
+	startDueStudy: (id: string) => void,
 ): void {
 	document.getElementById("btn-theme")?.addEventListener("click", () => {
 		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -223,12 +230,15 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
 		document.querySelectorAll<HTMLElement>("[data-study]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startStudy(btn.dataset.study!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-due]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startDueStudy(btn.dataset.due!); });
 		});
 		document.querySelectorAll<HTMLElement>("[data-stats]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startStats(btn.dataset.stats!); });

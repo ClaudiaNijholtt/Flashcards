@@ -1,12 +1,13 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame } from "lucide";
 import { state } from "./state";
-import { shuffle, showToast } from "./utils/helpers";
+import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
 import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
+import { fetchStreak, fetchAllDueCounts } from "./services/srs";
 import { renderHome, bindHomeEvents } from "./views/home";
-import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, undoLastCard, getActiveDeck } from "./views/study";
+import { renderStudy, bindStudyEvents, startStudy, startDueStudy, handleCardClick, markCard, undoLastCard, getActiveDeck, reshuffleStudy } from "./views/study";
 import { renderStudyModePick, bindStudyModePickEvents } from "./views/study-mode-pick";
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
@@ -34,7 +35,7 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); });
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); });
 	} else if (state.view === "study-mode-pick") {
 		app.innerHTML = renderStudyModePick();
 		bindStudyModePickEvents(render);
@@ -67,7 +68,7 @@ function render(): void {
 		bindDeckEditEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame } });
 }
 
 function handleStartStats(deckId: string): void {
@@ -171,7 +172,11 @@ async function onLogin(user: AuthUser): Promise<void> {
 	}
 
 	state.decks = await fetchDecks();
-	state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
+	[state.deckPlayCounts, state.streak, state.deckDueCounts] = await Promise.all([
+		fetchDeckPlayCounts(state.decks.map((d) => d.id)),
+		fetchStreak(),
+		fetchAllDueCounts(state.decks),
+	]);
 	state.view = "home";
 	render();
 }
@@ -221,15 +226,7 @@ document.addEventListener("keydown", (e) => {
 			break;
 		case "s":
 		case "S":
-			deck.cards = shuffle(deck.cards);
-			state.cardIndex = 0;
-			state.flipped = false;
-			state.correct = 0;
-			state.wrong = 0;
-			state.missed = [];
-			state.cardQualities = {};
-			state.studyStartTime = Date.now();
-			render();
+			reshuffleStudy(render);
 			break;
 	}
 });

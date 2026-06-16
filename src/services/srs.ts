@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
-import type { CardProgress, StudySession } from "../types";
+import type { CardProgress, StudySession, Flashcard } from "../types";
+import { cardId, todayIso } from "../utils/srs-algorithm";
 
 export async function fetchCardProgressMap(deckId: string): Promise<Map<string, CardProgress>> {
 	const { data } = await supabase
@@ -86,4 +87,47 @@ export async function countDueCards(deckId: string, cardIds: string[]): Promise<
 	// Cards NOT in the result set are due (never seen or overdue)
 	const notDueIds = new Set((data ?? []).map((r) => r.card_id as string));
 	return cardIds.filter((id) => !notDueIds.has(id)).length;
+}
+
+export async function fetchStreak(): Promise<number> {
+	const { data } = await supabase
+		.from("study_sessions")
+		.select("studied_at")
+		.order("studied_at", { ascending: false })
+		.limit(365);
+	if (!data?.length) return 0;
+	const days = new Set(data.map((r) => (r.studied_at as string).split("T")[0]));
+	const today = todayIso();
+	let streak = 0;
+	for (let i = days.has(today) ? 0 : 1; i < 365; i++) {
+		const d = new Date();
+		d.setDate(d.getDate() - i);
+		const iso = d.toISOString().split("T")[0];
+		if (days.has(iso)) streak++;
+		else break;
+	}
+	return streak;
+}
+
+export async function fetchAllDueCounts(
+	decks: { id: string; cards: Flashcard[] }[],
+): Promise<Record<string, number>> {
+	if (!decks.length) return {};
+	const today = todayIso();
+	const { data } = await supabase
+		.from("card_progress")
+		.select("deck_id, card_id")
+		.in("deck_id", decks.map((d) => d.id))
+		.gt("due_date", today);
+	const notDue: Record<string, Set<string>> = {};
+	for (const row of data ?? []) {
+		if (!notDue[row.deck_id]) notDue[row.deck_id] = new Set();
+		notDue[row.deck_id].add(row.card_id as string);
+	}
+	const counts: Record<string, number> = {};
+	for (const deck of decks) {
+		const notDueSet = notDue[deck.id] ?? new Set<string>();
+		counts[deck.id] = deck.cards.filter((c) => !notDueSet.has(cardId(c))).length;
+	}
+	return counts;
 }

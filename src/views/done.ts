@@ -1,7 +1,7 @@
 import { state } from "../state";
 import { shuffle } from "../utils/helpers";
 import { getActiveDeck, startStudy } from "./study";
-import { saveCardProgressBatch, saveStudySession } from "../services/srs";
+import { saveCardProgressBatch, saveStudySession, fetchStreak, fetchAllDueCounts } from "../services/srs";
 import { computeNextProgress, cardId } from "../utils/srs-algorithm";
 import type { Quality } from "../types";
 
@@ -40,9 +40,7 @@ export function bindDoneEvents(render: () => void): void {
 	void persistSession();
 
 	document.getElementById("btn-retry")?.addEventListener("click", () => {
-		const deck = getActiveDeck();
-		if (!deck) return;
-		deck.cards = shuffle(state.missed);
+		state.studyCards = shuffle([...state.missed]);
 		state.cardIndex = 0;
 		state.flipped = false;
 		state.correct = 0;
@@ -60,6 +58,11 @@ export function bindDoneEvents(render: () => void): void {
 
 	document.getElementById("btn-home")?.addEventListener("click", () => {
 		state.view = "home";
+		void Promise.all([fetchStreak(), fetchAllDueCounts(state.decks)]).then(([streak, dueCounts]) => {
+			state.streak = streak;
+			state.deckDueCounts = dueCounts;
+			render();
+		});
 		render();
 	});
 }
@@ -71,12 +74,14 @@ async function persistSession(): Promise<void> {
 
 	const durationMs = Date.now() - state.studyStartTime;
 
-	// Compute new SRS progress for every reviewed card
-	const progressList = deck.cards.map((card) => {
-		const cid = cardId(card);
-		const quality: Quality = state.cardQualities[cid] ?? 0;
-		return computeNextProgress(undefined, deck.id, cid, quality);
-	});
+	// Compute new SRS progress for every card that was actually reviewed
+	const progressList = deck.cards
+		.filter((card) => cardId(card) in state.cardQualities)
+		.map((card) => {
+			const cid = cardId(card);
+			const quality: Quality = state.cardQualities[cid] as Quality;
+			return computeNextProgress(undefined, deck.id, cid, quality);
+		});
 
 	await Promise.all([
 		saveCardProgressBatch(progressList),
