@@ -180,6 +180,17 @@ export function renderHome(): string {
           ${statsHtml}
         </div>
 
+        <div class="join-game-section">
+          <div class="join-game-section__label">Meedoen aan een spel</div>
+          <div class="join-game-section__form">
+            <input type="text" id="duel-code-home" class="join-game-section__input" placeholder="Spelcode…" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+            <button class="btn-primary" id="btn-home-join-duel" title="Meedoen">
+              <i data-lucide="arrow-right"></i>
+            </button>
+          </div>
+          <p id="duel-home-error" class="duel-lobby__error hidden"></p>
+        </div>
+
         ${apiBannerHtml}
 
         <div class="add-section">
@@ -218,15 +229,7 @@ export function renderHome(): string {
           <div class="add-actions">
             <input type="file" id="json-input" accept=".json" style="display:none" />
             <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Importeren via JSON</button>
-            <button class="btn" id="btn-join-duel-toggle"><i data-lucide="swords"></i> Duel meedoen</button>
             <button class="btn" id="btn-share-import-toggle"><i data-lucide="share-2"></i> Deck overnemen</button>
-          </div>
-          <div class="duel-join-panel hidden" id="duel-join-panel">
-            <div class="duel-join-form">
-              <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-              <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
-            </div>
-            <p id="duel-home-error" class="duel-lobby__error hidden"></p>
           </div>
           <div class="duel-join-panel hidden" id="share-import-panel">
             <div class="duel-join-form">
@@ -590,7 +593,6 @@ export function bindHomeEvents(
 	// Share import: toggle panel
 	document.getElementById("btn-share-import-toggle")?.addEventListener("click", () => {
 		const panel = document.getElementById("share-import-panel");
-		document.getElementById("duel-join-panel")?.classList.add("hidden");
 		panel?.classList.toggle("hidden");
 		if (!panel?.classList.contains("hidden")) (document.getElementById("share-code-input") as HTMLInputElement)?.focus();
 	});
@@ -627,15 +629,6 @@ export function bindHomeEvents(
 			render();
 		} catch (err) {
 			if (errEl) { errEl.textContent = err instanceof Error ? err.message : "Overnemen mislukt"; errEl.classList.remove("hidden"); }
-		}
-	});
-
-	// Duel: join toggle
-	document.getElementById("btn-join-duel-toggle")?.addEventListener("click", () => {
-		const panel = document.getElementById("duel-join-panel");
-		panel?.classList.toggle("hidden");
-		if (!panel?.classList.contains("hidden")) {
-			(document.getElementById("duel-code-home") as HTMLInputElement)?.focus();
 		}
 	});
 
