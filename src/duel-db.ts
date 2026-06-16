@@ -27,7 +27,7 @@ export async function createDuelInDb(deckName: string, cards: Flashcard[]): Prom
 		.select()
 		.single();
 
-	if (error) throw error;
+	if (error) throw new Error(error.message);
 	return { ...data, cards: data.cards as Flashcard[] };
 }
 
@@ -53,7 +53,7 @@ export async function joinDuelInDb(duelId: string): Promise<void> {
 		.eq("id", duelId)
 		.eq("status", "waiting");
 
-	if (error) throw error;
+	if (error) throw new Error(error.message);
 }
 
 export async function saveDuelScore(
