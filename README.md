@@ -1,6 +1,6 @@
 # Flashcard Generator
 
-AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcards genereren. Studeer met flashcards of multiple choice, duel real-time tegen een vriend, en volg je voortgang via spaced repetition.
+AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcards genereren. Studeer met flashcards of multiple choice, duel real-time tegen een vriend, speel een Kahoot-stijl quiz met meerdere spelers, en volg je voortgang via spaced repetition.
 
 ## Functies
 
@@ -10,10 +10,12 @@ AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcar
 - **"Leer vandaag"** — één klik om alleen de kaarten te studeren die vandaag op het schema staan
 - **Solo multiple choice** — kies per sessie tussen flashcards of MC met 4 opties
 - **Duel mode** — real-time competitie met een vriend via een 6-cijferige kamercode (anti-cheat MC)
+- **Kahoot-quiz** — multiplayer kennisquiz met timer en snelheidspunten (100–1000 per vraag); host via ⋯-menu, spelers joinen met code
+- **Deck delen** — genereer een deelcode zodat anderen jouw deck kunnen overnemen
 - **Statistieken** — sessielijst, staafdiagram, correctheidspercentages per deck
 - **Deck editor** — kaarten toevoegen, bewerken, verwijderen; decknaam hernoemen
 - **Donker thema** — wisselt runtime, voorkeur opgeslagen in localStorage
-- **Deck zoeken** — live filter op naam op de homepagina
+- **Deck zoeken & filteren** — live filter op naam en tag op de homepagina
 - **Ongedaan maken** — laatste kaartbeoordeling terugdraaien (`U`)
 - **Swipe-gebaren & schudden** — navigeren en scoren op mobiel
 - **PWA** — installeerbaar op iOS en Android
@@ -83,10 +85,11 @@ flashcard-app/
 │   ├── services/
 │   │   ├── ai.ts             # Anthropic API client
 │   │   ├── auth.ts           # Supabase auth helpers
-│   │   ├── decks.ts          # CRUD voor decks
+│   │   ├── decks.ts          # CRUD voor decks + deck delen
 │   │   ├── duels.ts          # Duel aanmaken & joinen
+│   │   ├── game.ts           # Quiz aanmaken, joinen, antwoorden, Realtime
 │   │   ├── profiles.ts       # Gebruikersprofielen
-│   │   ├── realtime.ts       # Supabase Broadcast singleton
+│   │   ├── realtime.ts       # Supabase Broadcast/Realtime singletons
 │   │   ├── srs.ts            # Card progress, sessions, streak, due counts
 │   │   └── supabase.ts       # Supabase client
 │   ├── utils/
@@ -100,6 +103,8 @@ flashcard-app/
 │   │   ├── duel-lobby.ts
 │   │   ├── duel-result.ts
 │   │   ├── duel-study.ts     # Anti-cheat MC duel
+│   │   ├── game-host.ts      # Quiz host: lobby, vragen, resultaten, ranglijst
+│   │   ├── game-player.ts    # Quiz speler: deelnemen, antwoorden, ranglijst
 │   │   ├── generating.ts
 │   │   ├── home.ts           # Homepagina + deck zoeken + streak
 │   │   ├── profile.ts
@@ -115,6 +120,7 @@ flashcard-app/
 │       ├── _duel.scss
 │       ├── _edit.scss
 │       ├── _forms.scss
+│       ├── _game.scss        # Quiz layout, antwoordknoppen, timer, ranglijst
 │       ├── _home.scss
 │       ├── _profile.scss
 │       ├── _srs.scss

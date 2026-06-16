@@ -2,6 +2,55 @@
 
 All notable changes to this project will be documented here.
 
+## [1.21.0] - 2026-06-16
+
+### Added
+
+- **Kahoot-quiz**: multiplayer kennisquiz op basis van elk deck
+  - Host klikt "Quiz starten" in het ⋯-menu van een deck en krijgt een 6-cijferige code
+  - Spelers voeren de code in bij "Meedoen aan een spel" en kiezen een bijnaam
+  - Host ziet live spelerslijst en klikt "Starten" zodra iedereen aanwezig is
+  - Elke vraag toont de voorkant van een kaart met 4 gekleurde antwoordknoppen (1 goed + 3 afleiders)
+  - 15-seconden afteltimer gesynchroniseerd via `question_started_at` in de database
+  - Punten op basis van snelheid: correct = 100–1000 punten, fout = 0 punten
+  - Na elke vraag: correct antwoord getoond, tussenstand bijgewerkt
+  - Eindscherm met volledige ranglijst; eigen positie gemarkeerd bij spelers
+  - Drie nieuwe Supabase-tabellen: `quiz_sessions`, `quiz_players`, `quiz_answers`
+  - Live spelerslijst en vraagvoortgang via Supabase Realtime (postgres_changes)
+
+---
+
+## [1.20.0] - 2026-06-16
+
+### Added
+
+- **API-sleutel op profielpagina**: Claude AI-sleutel instellen/wijzigen vanuit het profiel (was eerder apart paneel op de homepagina)
+
+### Fixed
+
+- Inputtekst in dark mode was zwart in plaats van licht op de profielpagina
+- Primaire knoppen (Leren, Deck toevoegen, Meedoen) hadden in dark mode een lichte achtergrond met lichte tekst — nu altijd donker/licht contrast via CSS-variabelen (`--btn-primary-bg/fg/hover`)
+- Hover op de thema-wissel-knop was rood; btn-icon hover is nu neutraal, alleen `btn-icon--danger` heeft rode hover
+
+---
+
+## [1.19.0] - 2026-06-16
+
+### Added
+
+- **Deck delen**: elk deck krijgt een unieke 6-tekens deelcode via de "Delen"-optie in het ⋯-menu
+- **Deck overnemen**: andere gebruikers kunnen een deck ophalen via deelcode en het aan hun eigen collectie toevoegen
+- **Meedoen aan een spel**: aparte sectie in de zijbalk (boven "Deck toevoegen") voor het invoeren van een duel- of quizcode, vervangt de toggleknop in het modal
+- **Glass modal voor deck toevoegen**: klik op "Deck toevoegen" opent een overlay met frosted-glass effect (backdrop-filter blur + saturate)
+- **FAB op mobiel**: floating action button (altijd zichtbaar op mobiel) om het modal te openen zonder te scrollen
+- iOS Safari auto-zoom fix: alle inputs krijgen op ≤600px schermen `font-size: 16px`
+
+### Fixed
+
+- "Kon deelcode niet aanmaken" — `share_code`-kolom ontbrak in de Supabase `decks`-tabel; `shareDeck()` controleert nu correct op bestaande code vóór update
+
+---
+
 ## [1.18.0] - 2026-06-16
 
 ### Added
