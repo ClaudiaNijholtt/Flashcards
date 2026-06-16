@@ -68,6 +68,7 @@ export interface AppState {
   studyMode: 'flashcard' | 'multiple-choice';
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
+  deckSearch: string;
   activeDeckId: string | null;
   cardIndex: number;
   flipped: boolean;

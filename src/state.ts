@@ -14,6 +14,7 @@ export const state: AppState = {
 	cardQualities: {},
 	studyStartTime: 0,
 	deckPlayCounts: {},
+	deckSearch: "",
 	apiKey: loadApiKey(),
 	isGenerating: false,
 	generationProgress: "",
