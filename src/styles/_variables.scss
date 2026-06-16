@@ -11,12 +11,17 @@
   --shadow-card:      0 2px 8px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
 
   // Derived helpers (replaces color.adjust() calls)
-  --btn-bg-hover:     #e3e0db;
-  --btn-kbd-bg:       #e0ddd8;
-  --btn-hover-border: #aaaaaa;
-  --prog-fill-opp:    #676764;
-  --face-answer:      #2a2a28;
-  --focus-ring:       rgba(26,26,24,.2);
+  --btn-bg-hover:       #e3e0db;
+  --btn-kbd-bg:         #e0ddd8;
+  --btn-hover-border:   #aaaaaa;
+  --prog-fill-opp:      #676764;
+  --face-answer:        #2a2a28;
+  --focus-ring:         rgba(26,26,24,.2);
+
+  // Primary button: always dark bg + light text
+  --btn-primary-bg:     #1a1a18;
+  --btn-primary-fg:     #f0ede8;
+  --btn-primary-hover:  #2e2e2b;
 
   // Danger zone
   --danger-bg:        #fff5f5;
@@ -39,12 +44,17 @@
   --text-hint:        #555550;
   --shadow-card:      0 2px 8px rgba(0,0,0,.25), 0 1px 2px rgba(0,0,0,.15);
 
-  --btn-bg-hover:     #2e2e2b;
-  --btn-kbd-bg:       #323230;
-  --btn-hover-border: #666666;
-  --prog-fill-opp:    #888880;
-  --face-answer:      #d8d5d0;
-  --focus-ring:       rgba(240,237,232,.2);
+  --btn-bg-hover:       #2e2e2b;
+  --btn-kbd-bg:         #323230;
+  --btn-hover-border:   #666666;
+  --prog-fill-opp:      #888880;
+  --face-answer:        #d8d5d0;
+  --focus-ring:         rgba(240,237,232,.2);
+
+  // Primary button: slightly lighter dark so it stands out from dark page bg
+  --btn-primary-bg:     #3c3c39;
+  --btn-primary-fg:     #f0ede8;
+  --btn-primary-hover:  #4a4a47;
 
   --danger-bg:        #1f1215;
   --danger-border:    #7a2424;
