@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented here.
 
+## [1.8.0] - 2026-06-16
+
+### Added
+
+- Friendly Dutch error messages replace raw Supabase/PostgrestError strings throughout the app
+- `translateDbError()` helper maps Postgres error codes (23505, 23503, 42501, PGRST116, PGRST301) and message patterns to Dutch
+- Auth error translator expanded with patterns for rate limits, invalid email, and network failures
+
+### Changed
+
+- Homepage redesigned: topbar with brand + username + logout icon, greeting with first name, stats bar showing deck and card counts, deck cards with study button per deck, empty state illustration
+- Security: Content-Security-Policy meta tag added, `rel="noopener noreferrer"` on all external links, API key stored in sessionStorage instead of localStorage
+- Architecture: `duel-channel.ts` singleton manages Supabase Realtime cleanup; dead guest-join code removed from duel-lobby; `fetchProfile` accepts optional userId for host lookup
+
+### Fixed
+
+- "Gebruikersnaam opslaan mislukt" — PostgrestError was not instanceof Error; now wrapped properly
+- "Duel aanmaken mislukt" — same PostgrestError wrapping fix in duel-db.ts
+- "Duelcode niet gevonden" for valid codes — RLS SELECT policy updated to allow reading `waiting` duels before joining; `fetchDuelByCode` switched to `.maybeSingle()` with explicit not-found check
+
+---
+
 ## [1.6.0] - 2026-06-15
 
 ### Added
