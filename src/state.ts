@@ -10,6 +10,8 @@ export const state: AppState = {
 	correct: 0,
 	wrong: 0,
 	missed: [],
+	cardQualities: {},
+	studyStartTime: 0,
 	apiKey: loadApiKey(),
 	isGenerating: false,
 	generationProgress: "",

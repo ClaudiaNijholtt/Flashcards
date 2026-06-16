@@ -6,6 +6,7 @@
 @use './auth';
 @use './duel';
 @use './home';
+@use './srs';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

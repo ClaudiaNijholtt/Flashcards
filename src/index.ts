@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
@@ -14,6 +14,7 @@ import { renderDuelLobby, bindDuelLobbyEvents } from "./views/duel-lobby";
 import { renderDuelStudy, bindDuelStudyEvents } from "./views/duel-study";
 import { renderDuelResult, bindDuelResultEvents } from "./views/duel-result";
 import { renderUsernameSetup, bindUsernameSetupEvents } from "./views/username-setup";
+import { renderStats, bindStatsEvents } from "./views/stats";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./services/duels";
 import { fetchProfile } from "./services/profiles";
 import { duelChannel } from "./services/realtime";
@@ -30,7 +31,7 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel);
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
 		bindStudyEvents(render);
@@ -49,9 +50,18 @@ function render(): void {
 	} else if (state.view === "username-setup") {
 		app.innerHTML = renderUsernameSetup();
 		bindUsernameSetupEvents(render);
+	} else if (state.view === "stats") {
+		app.innerHTML = renderStats();
+		bindStatsEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock } });
+}
+
+function handleStartStats(deckId: string): void {
+	state.activeDeckId = deckId;
+	state.view = "stats";
+	render();
 }
 
 async function handleStartDuel(deckId: string): Promise<void> {
@@ -184,10 +194,13 @@ document.addEventListener("keydown", (e) => {
 			}
 			break;
 		case "1":
-			markCard(false, render);
+			markCard(0, render);
 			break;
 		case "2":
-			markCard(true, render);
+			markCard(1, render);
+			break;
+		case "3":
+			markCard(2, render);
 			break;
 		case "s":
 		case "S":
@@ -197,6 +210,8 @@ document.addEventListener("keydown", (e) => {
 			state.correct = 0;
 			state.wrong = 0;
 			state.missed = [];
+			state.cardQualities = {};
+			state.studyStartTime = Date.now();
 			render();
 			break;
 	}

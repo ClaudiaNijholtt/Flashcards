@@ -45,6 +45,9 @@ export function renderHome(): string {
               <button class="btn-primary deck-card__study" data-study="${deck.id}">
                 Leren <i data-lucide="arrow-right"></i>
               </button>
+              <button class="btn-icon" data-stats="${deck.id}" title="Statistieken" aria-label="Statistieken bekijken">
+                <i data-lucide="bar-chart-2"></i>
+              </button>
               <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten">
                 <i data-lucide="swords"></i>
               </button>
@@ -133,6 +136,7 @@ export function bindHomeEvents(
 	startStudy: (id: string) => void,
 	startDuel: (deckId: string) => void,
 	joinDuel: (code: string) => void,
+	startStats: (deckId: string) => void,
 ): void {
 	document.getElementById("btn-logout")?.addEventListener("click", async () => {
 		await signOut();
@@ -213,7 +217,11 @@ export function bindHomeEvents(
 			const deck: Deck = {
 				id: Date.now().toString(),
 				name: data.name,
-				cards: data.cards,
+				cards: data.cards.map((c: { id?: string; question: string; answer: string }) => ({
+					id: c.id ?? crypto.randomUUID(),
+					question: c.question,
+					answer: c.answer,
+				})),
 				createdAt: new Date(),
 			};
 			if (state.user) {
@@ -234,7 +242,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -263,6 +271,14 @@ export function bindHomeEvents(
 			} catch (err) {
 				showToast(err instanceof Error ? err.message : "Verwijderen mislukt", true);
 			}
+		});
+	});
+
+	// Stats per deck
+	document.querySelectorAll<HTMLElement>("[data-stats]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startStats(btn.dataset.stats!);
 		});
 	});
 

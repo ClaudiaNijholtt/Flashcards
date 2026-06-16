@@ -98,6 +98,7 @@ function parseFlashcards(text: string): Flashcard[] {
       'question' in item && 'answer' in item
     )
     .map(item => ({
+      id: crypto.randomUUID(),
       question: String(item.question).trim(),
       answer: String(item.answer).trim(),
     }));

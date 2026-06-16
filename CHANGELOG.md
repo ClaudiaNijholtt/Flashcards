@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented here.
 
+## [1.9.0] - 2026-06-16
+
+### Added
+
+- **Spaced repetition (SRS)**: cards are scheduled using a simplified SM-2 algorithm — missed cards come back sooner, well-known cards later
+- **Three-button difficulty rating**: "Wist ik niet" / "Twijfel" / "Wist ik het" replaces the two-button system; quality feeds directly into SRS scheduling
+- **Statistics per deck**: bar chart of last 7 sessions, summary cards (sessions, average %, best %, cards studied), full history list; accessible via the chart icon on each deck card
+- **Study session tracking**: duration, correct/wrong/doubt counts saved per session to Supabase
+- Stable card IDs: every card now gets a UUID; existing cards without IDs receive a deterministic hash-based fallback ID
+- Keyboard shortcuts updated: `1` = niet geweten, `2` = twijfel, `3` = geweten
+- New Supabase tables: `card_progress` and `study_sessions` with RLS (migration in `supabase/migrations/20260616_srs.sql`)
+
+### Changed
+
+- Done screen now shows breakdown: geweten / twijfel / niet geweten + session duration
+- "Retry" button on done screen includes both "twijfel" and "niet geweten" cards
+
+---
+
 ## [1.8.0] - 2026-06-16
 
 ### Added

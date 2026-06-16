@@ -21,10 +21,23 @@ export function loadDecks(): Deck[] {
   try {
     const raw = localStorage.getItem(KEYS.decks);
     if (!raw) return [];
-    return JSON.parse(raw) as Deck[];
+    const decks = JSON.parse(raw) as Deck[];
+    return decks.map((deck) => ({
+      ...deck,
+      cards: deck.cards.map((c) => ({ ...c, id: c.id ?? legacyCardId(c) })),
+    }));
   } catch {
     return [];
   }
+}
+
+function legacyCardId(card: { question: string; answer: string }): string {
+  let hash = 0;
+  const str = card.question + "\x00" + card.answer;
+  for (let i = 0; i < str.length; i++) {
+    hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+  }
+  return Math.abs(hash).toString(36);
 }
 
 export function deleteDeck(id: string, decks: Deck[]): Deck[] {
