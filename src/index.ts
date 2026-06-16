@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus } from "lucide";
 import { state } from "./state";
 import { shuffle, showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
@@ -17,6 +17,7 @@ import { renderDuelResult, bindDuelResultEvents } from "./views/duel-result";
 import { renderUsernameSetup, bindUsernameSetupEvents } from "./views/username-setup";
 import { renderStats, bindStatsEvents } from "./views/stats";
 import { renderProfile, bindProfileEvents } from "./views/profile";
+import { renderDeckEdit, bindDeckEditEvents } from "./views/deck-edit";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./services/duels";
 import { fetchProfile } from "./services/profiles";
 import { duelChannel } from "./services/realtime";
@@ -33,7 +34,7 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); });
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); });
 	} else if (state.view === "study-mode-pick") {
 		app.innerHTML = renderStudyModePick();
 		bindStudyModePickEvents(render);
@@ -61,9 +62,12 @@ function render(): void {
 	} else if (state.view === "profile") {
 		app.innerHTML = renderProfile();
 		bindProfileEvents(render);
+	} else if (state.view === "deck-edit") {
+		app.innerHTML = renderDeckEdit();
+		bindDeckEditEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus } });
 }
 
 function handleStartStats(deckId: string): void {

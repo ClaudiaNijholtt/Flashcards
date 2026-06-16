@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { translateDbError } from "../utils/helpers";
-import type { Deck } from "../types";
+import type { Deck, Flashcard } from "../types";
 
 export async function fetchDecks(): Promise<Deck[]> {
 	const { data, error } = await supabase
@@ -51,4 +51,14 @@ export async function insertDeck(deck: Deck): Promise<void> {
 export async function removeDeck(id: string): Promise<void> {
 	const { error } = await supabase.from("decks").delete().eq("id", id);
 	if (error) throw new Error(translateDbError(error, "Kon deck niet verwijderen"));
+}
+
+export async function renameDeck(id: string, name: string): Promise<void> {
+	const { error } = await supabase.from("decks").update({ name }).eq("id", id);
+	if (error) throw new Error(translateDbError(error, "Kon decknaam niet opslaan"));
+}
+
+export async function updateDeckCards(id: string, cards: Flashcard[]): Promise<void> {
+	const { error } = await supabase.from("decks").update({ cards }).eq("id", id);
+	if (error) throw new Error(translateDbError(error, "Kon kaarten niet opslaan"));
 }

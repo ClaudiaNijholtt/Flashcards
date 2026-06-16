@@ -6,6 +6,7 @@ export const state: AppState = {
 	studyMode: "flashcard",
 	decks: [],
 	activeDeckId: null,
+	editDeckId: null,
 	cardIndex: 0,
 	flipped: false,
 	correct: 0,

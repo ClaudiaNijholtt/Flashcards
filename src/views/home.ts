@@ -51,6 +51,9 @@ export function renderHome(): string {
               <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten">
                 <i data-lucide="swords"></i>
               </button>
+              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken" aria-label="Deck bewerken">
+                <i data-lucide="pencil"></i>
+              </button>
               <button class="btn-icon" data-export="${deck.id}" title="Exporteren" aria-label="Exporteren">
                 <i data-lucide="download"></i>
               </button>
@@ -170,6 +173,7 @@ export function bindHomeEvents(
 	joinDuel: (code: string) => void,
 	startStats: (deckId: string) => void,
 	goToProfile: () => void,
+	editDeck: (id: string) => void,
 ): void {
 	document.getElementById("btn-theme")?.addEventListener("click", () => {
 		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -204,13 +208,14 @@ export function bindHomeEvents(
               <button class="btn-primary" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
               <button class="btn-icon" data-stats="${deck.id}"><i data-lucide="bar-chart-2"></i></button>
               <button class="btn-icon" data-duel="${deck.id}"><i data-lucide="swords"></i></button>
+              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken"><i data-lucide="pencil"></i></button>
               <button class="btn-icon" data-export="${deck.id}"><i data-lucide="download"></i></button>
               <button class="btn-icon" data-delete="${deck.id}"><i data-lucide="trash-2"></i></button>
             </div>
           </div>`).join("")
 			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`;
-		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2 }) =>
-			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2 } }));
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil } }));
 		bindDeckCardEvents();
 	});
 
@@ -218,7 +223,7 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
@@ -230,6 +235,12 @@ export function bindHomeEvents(
 		});
 		document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startDuel(btn.dataset.duel!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				editDeck(btn.dataset.edit!);
+			});
 		});
 		document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
 			btn.addEventListener("click", (e) => {
@@ -365,7 +376,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -374,6 +385,14 @@ export function bindHomeEvents(
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
 			startStudy(btn.dataset.study!);
+		});
+	});
+
+	// Edit deck
+	document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			editDeck(btn.dataset.edit!);
 		});
 	});
 
