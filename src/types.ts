@@ -81,8 +81,45 @@ export interface StudySession {
   durationMs: number;
 }
 
+export interface QuizQuestion {
+  question: string;
+  correctAnswer: string;
+  options: string[];
+}
+
+export type QuizPhase = 'join' | 'lobby' | 'question' | 'after-question' | 'final';
+
+export interface QuizPlayer {
+  id: string;
+  sessionId: string;
+  nickname: string;
+  score: number;
+}
+
+export interface QuizAnswer {
+  playerId: string;
+  chosenAnswer: string;
+  isCorrect: boolean;
+  pointsEarned: number;
+}
+
+export interface ActiveQuiz {
+  sessionId: string;
+  deckName: string;
+  questions: QuizQuestion[];
+  isHost: boolean;
+  myPlayerId: string | null;
+  myNickname: string;
+  players: QuizPlayer[];
+  phase: QuizPhase;
+  currentQuestion: number;
+  questionStartedAt: number;
+  hasAnsweredCurrent: boolean;
+  currentAnswers: QuizAnswer[];
+}
+
 export interface AppState {
-  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit';
+  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player';
   editDeckId: string | null;
   studyMode: 'flashcard' | 'multiple-choice';
   decks: Deck[];
@@ -107,6 +144,7 @@ export interface AppState {
   generationProgress: string;
   user: AuthUser | null;
   duel: ActiveDuel | null;
+  quiz: ActiveQuiz | null;
 }
 
 export interface AnthropicMessage {
