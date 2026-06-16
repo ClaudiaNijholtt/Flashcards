@@ -73,13 +73,23 @@ export async function updateDeckCards(id: string, cards: Flashcard[]): Promise<v
 }
 
 export async function shareDeck(deckId: string): Promise<string> {
-	const { data: existing } = await supabase.from("decks").select("share_code").eq("id", deckId).single();
+	const { data: existing, error: selectErr } = await supabase
+		.from("decks")
+		.select("share_code")
+		.eq("id", deckId)
+		.single();
+
+	// Any error other than "no rows" means the column or table is missing
+	if (selectErr && selectErr.code !== "PGRST116") {
+		throw new Error(translateDbError(selectErr, "Kon deelcode niet ophalen — voer de SQL-migratie uit in het Supabase dashboard"));
+	}
+
 	if (existing?.share_code) return existing.share_code as string;
 
 	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 	const code = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 	const { error } = await supabase.from("decks").update({ share_code: code }).eq("id", deckId);
-	if (error) throw new Error(translateDbError(error, "Kon deelcode niet aanmaken — voeg de share_code kolom toe aan de decks tabel"));
+	if (error) throw new Error(translateDbError(error, "Kon deelcode niet aanmaken"));
 	return code;
 }
 
