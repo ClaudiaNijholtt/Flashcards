@@ -6,6 +6,22 @@ import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts } from "../serv
 import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
+let _outsideClickHandler: (() => void) | null = null;
+
+function deckMoreHtml(id: string): string {
+	return `
+    <div class="deck-more">
+      <button class="btn-icon" data-more-btn="${id}" title="Meer opties" aria-label="Meer opties"><i data-lucide="ellipsis"></i></button>
+      <div class="deck-more__menu hidden" id="more-menu-${id}">
+        <button class="deck-more__item" data-stats="${id}"><i data-lucide="bar-chart-2"></i> Statistieken</button>
+        <button class="deck-more__item" data-duel="${id}"><i data-lucide="swords"></i> Duel starten</button>
+        <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
+        <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
+        <button class="deck-more__item deck-more__item--danger" data-delete="${id}"><i data-lucide="trash-2"></i> Verwijderen</button>
+      </div>
+    </div>`;
+}
+
 export function renderHome(): string {
 	const hasKey = !!state.apiKey;
 	const totalCards = state.decks.reduce((sum, d) => sum + d.cards.length, 0);
@@ -47,25 +63,11 @@ export function renderHome(): string {
               </div>
             </div>
             <div class="deck-card__actions">
-              ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
-              <button class="btn-primary deck-card__study" data-study="${deck.id}">
-                Leren <i data-lucide="arrow-right"></i>
-              </button>
-              <button class="btn-icon" data-stats="${deck.id}" title="Statistieken" aria-label="Statistieken bekijken">
-                <i data-lucide="bar-chart-2"></i>
-              </button>
-              <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten">
-                <i data-lucide="swords"></i>
-              </button>
-              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken" aria-label="Deck bewerken">
-                <i data-lucide="pencil"></i>
-              </button>
-              <button class="btn-icon" data-export="${deck.id}" title="Exporteren" aria-label="Exporteren">
-                <i data-lucide="download"></i>
-              </button>
-              <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Verwijderen">
-                <i data-lucide="trash-2"></i>
-              </button>
+              <div class="deck-card__primary">
+                ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
+                <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
+              </div>
+              ${deckMoreHtml(deck.id)}
             </div>
           </div>`).join("");
 
@@ -212,17 +214,15 @@ export function bindHomeEvents(
               <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
             </div>
             <div class="deck-card__actions">
-              <button class="btn-primary" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
-              <button class="btn-icon" data-stats="${deck.id}"><i data-lucide="bar-chart-2"></i></button>
-              <button class="btn-icon" data-duel="${deck.id}"><i data-lucide="swords"></i></button>
-              <button class="btn-icon" data-edit="${deck.id}" title="Bewerken"><i data-lucide="pencil"></i></button>
-              <button class="btn-icon" data-export="${deck.id}"><i data-lucide="download"></i></button>
-              <button class="btn-icon" data-delete="${deck.id}"><i data-lucide="trash-2"></i></button>
+              <div class="deck-card__primary">
+                <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
+              </div>
+              ${deckMoreHtml(deck.id)}
             </div>
           </div>`).join("")
 			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`;
-		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil }) =>
-			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil } }));
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis } }));
 		bindDeckCardEvents();
 	});
 
@@ -230,7 +230,7 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
@@ -247,10 +247,7 @@ export function bindHomeEvents(
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startDuel(btn.dataset.duel!); });
 		});
 		document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
-			btn.addEventListener("click", (e) => {
-				e.stopPropagation();
-				editDeck(btn.dataset.edit!);
-			});
+			btn.addEventListener("click", (e) => { e.stopPropagation(); editDeck(btn.dataset.edit!); });
 		});
 		document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
 			btn.addEventListener("click", (e) => {
@@ -277,6 +274,25 @@ export function bindHomeEvents(
 					showToast(err instanceof Error ? err.message : "Verwijderen mislukt", true);
 				}
 			});
+		});
+		bindMoreButtons();
+	}
+
+	function bindMoreButtons(): void {
+		document.querySelectorAll<HTMLElement>("[data-more-btn]").forEach((btn) => {
+			btn.addEventListener("click", (e) => {
+				e.stopPropagation();
+				const menu = document.getElementById(`more-menu-${btn.dataset.moreBtn}`);
+				const isOpen = menu && !menu.classList.contains("hidden");
+				document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((m) => m.classList.add("hidden"));
+				if (!isOpen && menu) menu.classList.remove("hidden");
+			});
+		});
+		document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((menu) => {
+			menu.addEventListener("click", (e) => e.stopPropagation());
+		});
+		document.querySelectorAll<HTMLElement>(".deck-more__item").forEach((item) => {
+			item.addEventListener("click", () => item.closest<HTMLElement>(".deck-more__menu")?.classList.add("hidden"));
 		});
 	}
 
@@ -386,7 +402,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -441,6 +457,14 @@ export function bindHomeEvents(
 			startDuel(btn.dataset.duel!);
 		});
 	});
+
+	// More menu: initial render binding
+	bindMoreButtons();
+
+	// Outside click closes all open menus
+	if (_outsideClickHandler) document.removeEventListener("click", _outsideClickHandler);
+	_outsideClickHandler = () => document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((m) => m.classList.add("hidden"));
+	document.addEventListener("click", _outsideClickHandler);
 
 	// Duel: join toggle
 	document.getElementById("btn-join-duel-toggle")?.addEventListener("click", () => {

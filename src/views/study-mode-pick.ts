@@ -27,7 +27,7 @@ export function renderStudyModePick(): string {
       <button class="mode-card" id="btn-mode-mc">
         <div class="mode-card__icon"><i data-lucide="list-checks"></i></div>
         <div class="mode-card__body">
-          <div class="mode-card__name">Multiple keuze</div>
+          <div class="mode-card__name">Meerkeuze</div>
           <div class="mode-card__desc">Kies het juiste antwoord uit 4 opties. Test jezelf zonder zelf te oordelen.</div>
         </div>
         <i data-lucide="arrow-right" class="mode-card__arrow"></i>

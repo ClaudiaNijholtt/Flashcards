@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks } from "./utils/storage";
@@ -68,7 +68,7 @@ function render(): void {
 		bindDeckEditEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis } });
 }
 
 function handleStartStats(deckId: string): void {
