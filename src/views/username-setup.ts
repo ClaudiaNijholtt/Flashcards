@@ -1,7 +1,7 @@
 import { state } from "../state";
-import { saveUsername } from "../profile";
-import { fetchDecks } from "../db";
-import { showToast } from "../helpers";
+import { saveUsername } from "../services/profiles";
+import { fetchDecks } from "../services/decks";
+import { showToast } from "../utils/helpers";
 
 export function renderUsernameSetup(): string {
 	return `

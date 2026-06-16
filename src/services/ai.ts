@@ -1,4 +1,4 @@
-import type { Flashcard, AnthropicResponse } from './types';
+import type { Flashcard, AnthropicResponse } from '../types';
 
 const API_URL = 'https://api.anthropic.com/v1/messages';
 const MODEL = 'claude-sonnet-4-6';

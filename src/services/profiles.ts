@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { translateDbError } from "../utils/helpers";
 
 export interface Profile {
 	id: string;
@@ -15,9 +16,10 @@ export async function fetchProfile(userId?: string): Promise<Profile | null> {
 export async function saveUsername(username: string): Promise<void> {
 	const { data: { user } } = await supabase.auth.getUser();
 	if (!user) throw new Error("Niet ingelogd");
+
 	const { error } = await supabase.from("profiles").upsert({ id: user.id, username });
 	if (error) {
-		if (error.code === "23505") throw new Error("Deze gebruikersnaam is al bezet");
-		throw new Error(error.message);
+		if (error.code === "23505") throw new Error("Deze gebruikersnaam is al bezet, kies een andere");
+		throw new Error(translateDbError(error, "Kon gebruikersnaam niet opslaan"));
 	}
 }

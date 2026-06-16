@@ -1,4 +1,4 @@
-import type { Deck } from './types';
+import type { Deck } from '../types';
 
 const KEYS = {
   apiKey: 'fc_api_key',

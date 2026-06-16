@@ -1,7 +1,7 @@
 import { state } from "../state";
-import { esc, showToast } from "../helpers";
-import { duelChannel } from "../duel-channel";
-import { saveDuelScore } from "../duel-db";
+import { esc, showToast } from "../utils/helpers";
+import { duelChannel } from "../services/realtime";
+import { saveDuelScore } from "../services/duels";
 
 export function renderDuelStudy(): string {
 	const duel = state.duel!;

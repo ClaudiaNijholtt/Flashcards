@@ -1,5 +1,5 @@
 import { state } from "../state";
-import { esc } from "../helpers";
+import { esc } from "../utils/helpers";
 
 export function renderGenerating(): string {
 	return `

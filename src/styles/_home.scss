@@ -1,0 +1,274 @@
+@use "./variables" as *;
+
+// ── Top bar ──────────────────────────────────────────────────────────────────
+
+.topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-bottom: 1.25rem;
+	margin-bottom: 2rem;
+	border-bottom: 1.5px solid $border;
+
+	&__brand {
+		font-size: 18px;
+		font-weight: 700;
+		letter-spacing: -0.4px;
+	}
+
+	&__user {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	&__name {
+		font-size: 13px;
+		color: $text-muted;
+		font-weight: 500;
+		max-width: 160px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────────────
+
+.home-hero {
+	margin-bottom: 2rem;
+
+	h1 {
+		font-size: 26px;
+		font-weight: 700;
+		letter-spacing: -0.5px;
+		margin-bottom: 0.75rem;
+	}
+}
+
+.home-stats {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.home-stat {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+
+	&__num {
+		font-size: 20px;
+		font-weight: 700;
+	}
+
+	&__label {
+		font-size: 13px;
+		color: $text-muted;
+	}
+
+	&__sep {
+		font-size: 14px;
+		color: $text-hint;
+		margin: 0 0.25rem;
+	}
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+
+.section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0.75rem;
+}
+
+// ── Deck card (new layout) ────────────────────────────────────────────────────
+
+.deck-card {
+	padding: 1.1rem 1.25rem;
+	gap: 1rem;
+
+	&__icon {
+		width: 40px;
+		height: 40px;
+		border-radius: $radius-md;
+		background: $bg;
+		border: 1.5px solid $border;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		color: $text-muted;
+
+		svg { width: 18px; height: 18px; }
+	}
+
+	&__actions {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	&__study {
+		font-size: 13px;
+		padding: 7px 14px;
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 600px) {
+	.deck-card {
+		flex-wrap: wrap;
+
+		&__icon { display: none; }
+
+		&__info { min-width: 0; }
+
+		&__actions {
+			width: 100%;
+			border-top: 1px solid $border;
+			padding-top: 0.75rem;
+			margin-top: 0.25rem;
+		}
+
+		&__study {
+			flex: 1;
+			justify-content: center;
+		}
+	}
+}
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+.home-empty {
+	text-align: center;
+	padding: 2.5rem 1rem 1.5rem;
+	color: $text-muted;
+
+	svg {
+		width: 40px;
+		height: 40px;
+		color: $border-mid;
+		margin-bottom: 1rem;
+	}
+
+	p {
+		font-size: 15px;
+		max-width: 300px;
+		margin: 0 auto;
+	}
+}
+
+// ── API key banner (only shown when missing) ──────────────────────────────────
+
+.api-banner {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	background: #fffbeb;
+	border: 1.5px solid #f5e090;
+	border-radius: $radius-lg;
+	padding: 1rem 1.25rem;
+	margin-bottom: 1.5rem;
+
+	svg { width: 18px; height: 18px; color: #b87d0a; flex-shrink: 0; margin-top: 1px; }
+
+	&__body { flex: 1; }
+
+	&__title {
+		font-size: 13px;
+		font-weight: 600;
+		color: #7a5200;
+		margin-bottom: 0.5rem;
+	}
+
+	&__form {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+
+		input {
+			flex: 1;
+			min-width: 160px;
+			padding: 8px 12px;
+			border: 1.5px solid #e8d88a;
+			border-radius: $radius-sm;
+			font-size: 13px;
+			font-family: monospace;
+			background: #fffdf0;
+			color: $text;
+			outline: none;
+			&:focus { border-color: #b87d0a; }
+		}
+	}
+}
+
+// ── API key settings (collapsed, when set) ────────────────────────────────────
+
+.api-settings {
+	margin-top: 2rem;
+	border-top: 1.5px solid $border;
+	padding-top: 1.25rem;
+
+	details {
+		summary {
+			font-size: 12px;
+			color: $text-muted;
+			cursor: pointer;
+			list-style: none;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			user-select: none;
+
+			&::-webkit-details-marker { display: none; }
+			&:hover { color: $text; }
+
+			svg { width: 14px; height: 14px; }
+		}
+	}
+
+	&__body {
+		margin-top: 0.75rem;
+		display: flex;
+		gap: 8px;
+
+		input {
+			flex: 1;
+			padding: 8px 12px;
+			border: 1.5px solid $border-mid;
+			border-radius: $radius-sm;
+			font-size: 13px;
+			font-family: monospace;
+			background: $bg;
+			color: $text;
+			outline: none;
+			&:focus { border-color: $text; }
+		}
+	}
+}
+
+// ── Add section ───────────────────────────────────────────────────────────────
+
+.add-section {
+	margin-top: 2rem;
+}
+
+.add-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	margin-top: 1rem;
+}
+
+.duel-join-panel {
+	margin-top: 1rem;
+	padding: 1rem 1.25rem;
+	background: $surface;
+	border: 1.5px solid $border;
+	border-radius: $radius-lg;
+
+	.duel-join-form { justify-content: flex-start; }
+}

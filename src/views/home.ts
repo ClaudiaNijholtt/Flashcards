@@ -1,89 +1,130 @@
 import { state } from "../state";
-import { esc, formatDate, showToast } from "../helpers";
-import { saveApiKey, saveDecks, deleteDeck } from "../storage";
-import { signOut } from "../auth";
-import { insertDeck, removeDeck, fetchDecks } from "../db";
-import { generateFlashcards } from "../api";
-import { createDuelInDb } from "../duel-db";
+import { esc, formatDate, showToast } from "../utils/helpers";
+import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
+import { signOut } from "../services/auth";
+import { insertDeck, removeDeck, fetchDecks } from "../services/decks";
+import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
 export function renderHome(): string {
 	const hasKey = !!state.apiKey;
-	const decksHtml =
-		state.decks.length === 0
-			? `<p style="text-align:center;padding:1.5rem 0">Nog geen decks. Upload een document om te beginnen.</p>`
-			: state.decks
-					.map(
-						(deck) => `
-      <div class="deck-card" data-id="${deck.id}">
-        <div class="deck-card__info">
-          <div class="deck-card__name">${esc(deck.name)}</div>
-          <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
-        </div>
-        <div class="deck-card__actions">
-          <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten met dit deck"><i data-lucide="swords"></i></button>
-          <button class="btn-icon" data-export="${deck.id}" title="Exporteren als JSON" aria-label="Deck exporteren als JSON"><i data-lucide="download"></i></button>
-          <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Deck verwijderen"><i data-lucide="trash-2"></i></button>
-        </div>
-      </div>`,
-					)
-					.join("");
+	const totalCards = state.decks.reduce((sum, d) => sum + d.cards.length, 0);
+	const firstName = state.user?.username ?? state.user?.email?.split("@")[0] ?? "";
 
-	const displayName = state.user?.username ?? state.user?.email ?? state.user?.id ?? "";
-	const userBar = state.user
-		? `<div class="user-bar">
-        <span>Ingelogd als <strong>${esc(displayName)}</strong></span>
-        <button class="btn" id="btn-logout"><i data-lucide="log-out"></i> Uitloggen</button>
+	const statsHtml = state.decks.length > 0
+		? `<div class="home-stats">
+        <div class="home-stat">
+          <span class="home-stat__num">${state.decks.length}</span>
+          <span class="home-stat__label">deck${state.decks.length !== 1 ? "s" : ""}</span>
+        </div>
+        <span class="home-stat__sep">·</span>
+        <div class="home-stat">
+          <span class="home-stat__num">${totalCards}</span>
+          <span class="home-stat__label">kaarten</span>
+        </div>
+      </div>`
+		: "";
+
+	const decksHtml = state.decks.length === 0
+		? `<div class="home-empty">
+        <i data-lucide="book-open"></i>
+        <p>Je hebt nog geen decks. Upload een document hieronder om te beginnen.</p>
+      </div>`
+		: `<div class="section-header">
+        <div class="section-title">Mijn decks</div>
+      </div>
+      <div class="deck-list">
+        ${state.decks.map((deck) => `
+          <div class="deck-card" data-id="${deck.id}">
+            <div class="deck-card__icon" aria-hidden="true"><i data-lucide="book-open"></i></div>
+            <div class="deck-card__info">
+              <div class="deck-card__name">${esc(deck.name)}</div>
+              <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
+            </div>
+            <div class="deck-card__actions">
+              <button class="btn-primary deck-card__study" data-study="${deck.id}">
+                Leren <i data-lucide="arrow-right"></i>
+              </button>
+              <button class="btn-icon" data-duel="${deck.id}" title="Duel starten" aria-label="Duel starten">
+                <i data-lucide="swords"></i>
+              </button>
+              <button class="btn-icon" data-export="${deck.id}" title="Exporteren" aria-label="Exporteren">
+                <i data-lucide="download"></i>
+              </button>
+              <button class="btn-icon" data-delete="${deck.id}" title="Verwijderen" aria-label="Verwijderen">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </div>
+          </div>`).join("")}
+      </div>`;
+
+	const apiBannerHtml = !hasKey
+		? `<div class="api-banner">
+        <i data-lucide="triangle-alert"></i>
+        <div class="api-banner__body">
+          <div class="api-banner__title">API-sleutel vereist om decks te genereren</div>
+          <div class="api-banner__form">
+            <input type="password" id="api-input" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" />
+            <button class="btn-primary" id="api-save">Opslaan</button>
+          </div>
+        </div>
+      </div>`
+		: "";
+
+	const apiSettingsHtml = hasKey
+		? `<div class="api-settings">
+        <details>
+          <summary><i data-lucide="settings"></i> API-sleutel wijzigen</summary>
+          <div class="api-settings__body">
+            <input type="password" id="api-input" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" />
+            <button class="btn" id="api-save">Opslaan</button>
+          </div>
+        </details>
       </div>`
 		: "";
 
 	return `
-    ${userBar}
-    <div class="app-header">
-      <h1>Flashcard Generator</h1>
-      <p>Upload een document en laat AI flashcards maken</p>
-    </div>
-
-    <div class="api-key-section">
-      <div class="api-key-section__header" id="api-toggle">
-        <div class="api-key-section__title">
-          <span class="dot ${hasKey ? "ok" : ""}"></span>
-          API-sleutel ${hasKey ? "(opgeslagen)" : "(vereist)"}
-        </div>
-        <span style="font-size:12px;color:#aaa">${hasKey ? "Wijzigen ▾" : "Instellen ▾"}</span>
+    <div class="topbar">
+      <span class="topbar__brand">Flashcards</span>
+      <div class="topbar__user">
+        <span class="topbar__name">${esc(firstName)}</span>
+        <button class="btn-icon" id="btn-logout" title="Uitloggen" aria-label="Uitloggen">
+          <i data-lucide="log-out"></i>
+        </button>
       </div>
-      <div class="api-key-section__body ${hasKey ? "hidden" : ""}" id="api-body">
-        <input type="password" id="api-input" placeholder="sk-ant-..." value="${esc(state.apiKey)}" autocomplete="off" />
-        <button class="btn-primary" id="api-save">Opslaan</button>
+    </div>
+
+    <div class="home-hero">
+      <h1>Welkom terug${firstName ? `, ${esc(firstName)}` : ""}!</h1>
+      ${statsHtml}
+    </div>
+
+    ${apiBannerHtml}
+    ${decksHtml}
+
+    <div class="add-section">
+      <div class="section-title">Deck toevoegen</div>
+      <div class="upload-zone ${!hasKey ? "disabled" : ""}" id="upload-zone" role="button" tabindex="0" aria-label="Document uploaden">
+        <input type="file" id="file-input" accept=".pdf,.txt,.md" multiple />
+        <div class="upload-zone__icon"></div>
+        <div class="upload-zone__title">Klik of sleep een document</div>
+        <div class="upload-zone__sub">PDF, TXT of Markdown</div>
       </div>
-      ${!hasKey ? `<p style="margin-top:8px;font-size:12px">Haal je sleutel op via <a href="https://console.anthropic.com/keys" target="_blank" rel="noopener" style="color:#1a1a18">console.anthropic.com</a></p>` : ""}
-    </div>
-
-    <div class="upload-zone ${!hasKey ? "disabled" : ""}" id="upload-zone" role="button" tabindex="0" aria-label="Document uploaden">
-      <input type="file" id="file-input" accept=".pdf,.txt,.md" multiple />
-      <div class="upload-zone__icon"></div>
-      <div class="upload-zone__title">Klik of sleep een document</div>
-      <div class="upload-zone__sub">PDF, TXT of Markdown · meerdere bestanden tegelijk</div>
-    </div>
-
-    <div class="import-row">
-      <input type="file" id="json-input" accept=".json" style="display:none" />
-      <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Deck importeren via JSON</button>
-    </div>
-
-    ${state.decks.length > 0 ? `<div class="section-title">Mijn decks</div>` : ""}
-    <div class="deck-list">${decksHtml}</div>
-
-    <details class="duel-join-details" style="margin-top:1.5rem">
-      <summary class="btn" style="cursor:pointer;list-style:none"><i data-lucide="swords"></i> Duel meedoen</summary>
-      <div style="padding:1rem 0 0.5rem">
+      <div class="add-actions">
+        <input type="file" id="json-input" accept=".json" style="display:none" />
+        <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Importeren via JSON</button>
+        <button class="btn" id="btn-join-duel-toggle"><i data-lucide="swords"></i> Duel meedoen</button>
+      </div>
+      <div class="duel-join-panel hidden" id="duel-join-panel">
         <div class="duel-join-form">
           <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
           <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
         </div>
         <p id="duel-home-error" class="duel-lobby__error hidden"></p>
       </div>
-    </details>
+    </div>
+
+    ${apiSettingsHtml}
   `;
 }
 
@@ -98,10 +139,6 @@ export function bindHomeEvents(
 		state.user = null;
 		state.decks = [];
 		render();
-	});
-
-	document.getElementById("api-toggle")?.addEventListener("click", () => {
-		document.getElementById("api-body")?.classList.toggle("hidden");
 	});
 
 	document.getElementById("api-save")?.addEventListener("click", () => {
@@ -120,31 +157,25 @@ export function bindHomeEvents(
 	const zone = document.getElementById("upload-zone")!;
 	const fileInput = document.getElementById("file-input") as HTMLInputElement;
 
-	zone.addEventListener("click", () => {
+	zone?.addEventListener("click", () => {
 		if (!state.apiKey) {
 			showToast("Stel eerst een API-sleutel in", true);
 			return;
 		}
 		fileInput.click();
 	});
-	zone.addEventListener("keydown", (e) => {
-		if (e.key === "Enter" || e.key === " ") {
-			e.preventDefault();
-			zone.click();
-		}
+	zone?.addEventListener("keydown", (e) => {
+		if (e.key === "Enter" || e.key === " ") { e.preventDefault(); zone.click(); }
 	});
-	zone.addEventListener("dragover", (e) => {
-		e.preventDefault();
-		zone.classList.add("drag-over");
-	});
-	zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
-	zone.addEventListener("drop", (e) => {
+	zone?.addEventListener("dragover", (e) => { e.preventDefault(); zone.classList.add("drag-over"); });
+	zone?.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+	zone?.addEventListener("drop", (e) => {
 		e.preventDefault();
 		zone.classList.remove("drag-over");
 		const files = Array.from(e.dataTransfer?.files ?? []);
 		if (files.length) handleFiles(files, render);
 	});
-	fileInput.addEventListener("change", () => {
+	fileInput?.addEventListener("change", () => {
 		const files = Array.from(fileInput.files ?? []);
 		if (files.length) handleFiles(files, render);
 	});
@@ -169,7 +200,7 @@ export function bindHomeEvents(
 	// Import deck from JSON
 	const jsonInput = document.getElementById("json-input") as HTMLInputElement;
 	document.getElementById("btn-import-json")?.addEventListener("click", () => jsonInput.click());
-	jsonInput.addEventListener("change", async () => {
+	jsonInput?.addEventListener("change", async () => {
 		const file = jsonInput.files?.[0];
 		if (!file) return;
 		jsonInput.value = "";
@@ -199,19 +230,29 @@ export function bindHomeEvents(
 		}
 	});
 
+	// Deck: click card or study button → study
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-export]") || t.closest("[data-study]")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
 
+	document.querySelectorAll<HTMLElement>("[data-study]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startStudy(btn.dataset.study!);
+		});
+	});
+
+	// Delete deck
 	document.querySelectorAll<HTMLElement>("[data-delete]").forEach((btn) => {
 		btn.addEventListener("click", async (e) => {
 			e.stopPropagation();
 			const id = btn.dataset.delete!;
-			if (confirm("Deck verwijderen?")) {
+			if (!confirm("Deck verwijderen?")) return;
+			try {
 				if (state.user) {
 					await removeDeck(id);
 					state.decks = state.decks.filter((d) => d.id !== id);
@@ -219,11 +260,13 @@ export function bindHomeEvents(
 					state.decks = deleteDeck(id, state.decks);
 				}
 				render();
+			} catch (err) {
+				showToast(err instanceof Error ? err.message : "Verwijderen mislukt", true);
 			}
 		});
 	});
 
-	// Duel: start a new duel from a deck card
+	// Duel: start from deck
 	document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
@@ -231,20 +274,36 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Duel: join via code in the home "Duel meedoen" section
+	// Duel: join toggle
+	document.getElementById("btn-join-duel-toggle")?.addEventListener("click", () => {
+		const panel = document.getElementById("duel-join-panel");
+		panel?.classList.toggle("hidden");
+		if (!panel?.classList.contains("hidden")) {
+			(document.getElementById("duel-code-home") as HTMLInputElement)?.focus();
+		}
+	});
+
+	// Duel: join by code
 	const codeInput = document.getElementById("duel-code-home") as HTMLInputElement | null;
 	codeInput?.addEventListener("input", () => {
 		codeInput.value = codeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
 	});
+	codeInput?.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") document.getElementById("btn-home-join-duel")?.click();
+	});
 	document.getElementById("btn-home-join-duel")?.addEventListener("click", () => {
 		const code = codeInput?.value.trim() ?? "";
 		if (code.length !== 6) {
-			const err = document.getElementById("duel-home-error");
-			if (err) { err.textContent = "Voer een geldige 6-teken code in"; err.classList.remove("hidden"); }
+			showDuelError("Voer een geldige 6-teken code in");
 			return;
 		}
 		joinDuel(code);
 	});
+}
+
+function showDuelError(msg: string): void {
+	const el = document.getElementById("duel-home-error");
+	if (el) { el.textContent = msg; el.classList.remove("hidden"); }
 }
 
 function isValidDeckJson(data: unknown): data is { name: string; cards: { question: string; answer: string }[] } {
@@ -253,9 +312,7 @@ function isValidDeckJson(data: unknown): data is { name: string; cards: { questi
 	if (typeof d.name !== "string" || !d.name.trim()) return false;
 	if (!Array.isArray(d.cards) || d.cards.length === 0) return false;
 	return d.cards.every(
-		(c) =>
-			typeof c === "object" &&
-			c !== null &&
+		(c) => typeof c === "object" && c !== null &&
 			typeof (c as Record<string, unknown>).question === "string" &&
 			typeof (c as Record<string, unknown>).answer === "string",
 	);
