@@ -1,5 +1,5 @@
 import { state } from "../state";
-import { esc, shuffle } from "../helpers";
+import { esc, shuffle } from "../utils/helpers";
 import type { Deck } from "../types";
 
 let _shakeHandler: ((e: DeviceMotionEvent) => void) | null = null;

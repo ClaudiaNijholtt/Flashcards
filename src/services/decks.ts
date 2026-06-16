@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
-import { translateDbError } from "./helpers";
-import type { Deck } from "./types";
+import { translateDbError } from "../utils/helpers";
+import type { Deck } from "../types";
 
 export async function fetchDecks(): Promise<Deck[]> {
 	const { data, error } = await supabase

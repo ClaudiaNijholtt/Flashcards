@@ -1,5 +1,5 @@
-import { signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithGitHub } from "../auth";
-import { showToast } from "../helpers";
+import { signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithGitHub } from "../services/auth";
+import { showToast } from "../utils/helpers";
 
 type Mode = "login" | "register";
 

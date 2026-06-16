@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
-import { translateDbError } from "./helpers";
-import type { Flashcard } from "./types";
+import { translateDbError } from "../utils/helpers";
+import type { Flashcard } from "../types";
 
 export interface DuelRow {
 	id: string;

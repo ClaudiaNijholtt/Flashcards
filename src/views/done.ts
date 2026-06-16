@@ -1,5 +1,5 @@
 import { state } from "../state";
-import { shuffle } from "../helpers";
+import { shuffle } from "../utils/helpers";
 import { getActiveDeck, startStudy } from "./study";
 
 export function renderDone(): string {

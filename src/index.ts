@@ -1,10 +1,10 @@
 import "./styles/main.scss";
 import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings } from "lucide";
 import { state } from "./state";
-import { shuffle, showToast } from "./helpers";
-import { loadDecks, clearLocalDecks } from "./storage";
-import { getSessionUser, onAuthChange } from "./auth";
-import { fetchDecks, insertDeck } from "./db";
+import { shuffle, showToast } from "./utils/helpers";
+import { loadDecks, clearLocalDecks } from "./utils/storage";
+import { getSessionUser, onAuthChange } from "./services/auth";
+import { fetchDecks, insertDeck } from "./services/decks";
 import { renderHome, bindHomeEvents } from "./views/home";
 import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, getActiveDeck } from "./views/study";
 import { renderDone, bindDoneEvents } from "./views/done";
@@ -14,10 +14,10 @@ import { renderDuelLobby, bindDuelLobbyEvents } from "./views/duel-lobby";
 import { renderDuelStudy, bindDuelStudyEvents } from "./views/duel-study";
 import { renderDuelResult, bindDuelResultEvents } from "./views/duel-result";
 import { renderUsernameSetup, bindUsernameSetupEvents } from "./views/username-setup";
-import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./duel-db";
-import { fetchProfile } from "./profile";
-import { duelChannel } from "./duel-channel";
-import { supabase } from "./supabase";
+import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./services/duels";
+import { fetchProfile } from "./services/profiles";
+import { duelChannel } from "./services/realtime";
+import { supabase } from "./services/supabase";
 import type { AuthUser } from "./types";
 
 function render(): void {

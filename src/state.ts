@@ -1,5 +1,5 @@
 import type { AppState } from "./types";
-import { loadApiKey, loadDecks } from "./storage";
+import { loadApiKey, loadDecks } from "./utils/storage";
 
 export const state: AppState = {
 	view: "home",

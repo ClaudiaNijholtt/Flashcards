@@ -1,8 +1,8 @@
 import { state } from "../state";
-import { esc, showToast } from "../helpers";
-import { supabase } from "../supabase";
-import { fetchProfile } from "../profile";
-import { duelChannel } from "../duel-channel";
+import { esc, showToast } from "../utils/helpers";
+import { supabase } from "../services/supabase";
+import { fetchProfile } from "../services/profiles";
+import { duelChannel } from "../services/realtime";
 
 export function renderDuelLobby(): string {
 	const duel = state.duel!;

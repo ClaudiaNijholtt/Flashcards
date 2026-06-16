@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { translateDbError } from "./helpers";
+import { translateDbError } from "../utils/helpers";
 
 export interface Profile {
 	id: string;

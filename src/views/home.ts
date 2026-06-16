@@ -1,9 +1,9 @@
 import { state } from "../state";
-import { esc, formatDate, showToast } from "../helpers";
-import { saveApiKey, saveDecks, deleteDeck } from "../storage";
-import { signOut } from "../auth";
-import { insertDeck, removeDeck, fetchDecks } from "../db";
-import { generateFlashcards } from "../api";
+import { esc, formatDate, showToast } from "../utils/helpers";
+import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
+import { signOut } from "../services/auth";
+import { insertDeck, removeDeck, fetchDecks } from "../services/decks";
+import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
 export function renderHome(): string {

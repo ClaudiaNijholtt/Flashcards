@@ -1,6 +1,6 @@
 import { state } from "../state";
-import { esc } from "../helpers";
-import { duelChannel } from "../duel-channel";
+import { esc } from "../utils/helpers";
+import { duelChannel } from "../services/realtime";
 
 function formatTime(ms: number): string {
 	const s = Math.round(ms / 1000);
