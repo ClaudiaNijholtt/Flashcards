@@ -2,7 +2,7 @@ import { state } from "../state";
 import { esc, formatDate, showToast } from "../utils/helpers";
 import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
-import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts } from "../services/decks";
+import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
 import type { Deck } from "../types";
 
@@ -15,6 +15,7 @@ function deckMoreHtml(id: string): string {
       <div class="deck-more__menu hidden" id="more-menu-${id}">
         <button class="deck-more__item" data-stats="${id}"><i data-lucide="bar-chart-2"></i> Statistieken</button>
         <button class="deck-more__item" data-duel="${id}"><i data-lucide="swords"></i> Duel starten</button>
+        <button class="deck-more__item" data-share="${id}"><i data-lucide="share-2"></i> Delen</button>
         <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
         <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
         <button class="deck-more__item deck-more__item--danger" data-delete="${id}"><i data-lucide="trash-2"></i> Verwijderen</button>
@@ -160,6 +161,7 @@ export function renderHome(): string {
         <input type="file" id="json-input" accept=".json" style="display:none" />
         <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Importeren via JSON</button>
         <button class="btn" id="btn-join-duel-toggle"><i data-lucide="swords"></i> Duel meedoen</button>
+        <button class="btn" id="btn-share-import-toggle"><i data-lucide="share-2"></i> Deck overnemen</button>
       </div>
       <div class="duel-join-panel hidden" id="duel-join-panel">
         <div class="duel-join-form">
@@ -167,6 +169,13 @@ export function renderHome(): string {
           <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
         </div>
         <p id="duel-home-error" class="duel-lobby__error hidden"></p>
+      </div>
+      <div class="duel-join-panel hidden" id="share-import-panel">
+        <div class="duel-join-form">
+          <input type="text" id="share-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
+          <button class="btn-primary" id="btn-import-by-code">Overnemen <i data-lucide="arrow-right"></i></button>
+        </div>
+        <p id="share-import-error" class="duel-lobby__error hidden"></p>
       </div>
     </div>
 
@@ -245,6 +254,18 @@ export function bindHomeEvents(
 		});
 		document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startDuel(btn.dataset.duel!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-share]").forEach((btn) => {
+			btn.addEventListener("click", async (e) => {
+				e.stopPropagation();
+				try {
+					const code = await shareDeck(btn.dataset.share!);
+					try { await navigator.clipboard.writeText(code); showToast(`Deelcode gekopieerd: ${code}`); }
+					catch { showToast(`Deelcode: ${code} (kopieer handmatig)`); }
+				} catch (err) {
+					showToast(err instanceof Error ? err.message : "Delen mislukt", true);
+				}
+			});
 		});
 		document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); editDeck(btn.dataset.edit!); });
@@ -411,6 +432,20 @@ export function bindHomeEvents(
 		});
 	});
 
+	// Share deck
+	document.querySelectorAll<HTMLElement>("[data-share]").forEach((btn) => {
+		btn.addEventListener("click", async (e) => {
+			e.stopPropagation();
+			try {
+				const code = await shareDeck(btn.dataset.share!);
+				try { await navigator.clipboard.writeText(code); showToast(`Deelcode gekopieerd: ${code}`); }
+				catch { showToast(`Deelcode: ${code} (kopieer handmatig)`); }
+			} catch (err) {
+				showToast(err instanceof Error ? err.message : "Delen mislukt", true);
+			}
+		});
+	});
+
 	// Edit deck
 	document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
@@ -466,6 +501,47 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-more__menu").forEach((m) => m.classList.add("hidden"));
 	};
 	document.addEventListener("click", _outsideClickHandler, { capture: true });
+
+	// Share import: toggle panel
+	document.getElementById("btn-share-import-toggle")?.addEventListener("click", () => {
+		const panel = document.getElementById("share-import-panel");
+		document.getElementById("duel-join-panel")?.classList.add("hidden");
+		panel?.classList.toggle("hidden");
+		if (!panel?.classList.contains("hidden")) (document.getElementById("share-code-input") as HTMLInputElement)?.focus();
+	});
+
+	// Share import: submit
+	const shareCodeInput = document.getElementById("share-code-input") as HTMLInputElement | null;
+	shareCodeInput?.addEventListener("input", () => { shareCodeInput.value = shareCodeInput.value.toUpperCase().replace(/[^A-Z0-9]/g, ""); });
+	shareCodeInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("btn-import-by-code")?.click(); });
+	document.getElementById("btn-import-by-code")?.addEventListener("click", async () => {
+		const code = shareCodeInput?.value.trim() ?? "";
+		const errEl = document.getElementById("share-import-error");
+		if (code.length !== 6) { if (errEl) { errEl.textContent = "Voer een geldige 6-teken deelcode in"; errEl.classList.remove("hidden"); } return; }
+		errEl?.classList.add("hidden");
+		try {
+			const { name, cards, creatorUsername } = await fetchDeckByShareCode(code);
+			const deck: Deck = {
+				id: Date.now().toString(),
+				name,
+				cards: cards.map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() })),
+				createdAt: new Date(),
+				creatorUsername,
+			};
+			if (state.user) {
+				await insertDeck(deck);
+				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
+			} else {
+				state.decks.push(deck);
+				saveDecks(state.decks);
+			}
+			showToast(`"${deck.name}" overgenomen ✓`);
+			render();
+		} catch (err) {
+			if (errEl) { errEl.textContent = err instanceof Error ? err.message : "Overnemen mislukt"; errEl.classList.remove("hidden"); }
+		}
+	});
 
 	// Duel: join toggle
 	document.getElementById("btn-join-duel-toggle")?.addEventListener("click", () => {
