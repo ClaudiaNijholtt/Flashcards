@@ -38,6 +38,13 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
+	&__tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px;
+		margin-bottom: 3px;
+	}
+
 	&__meta {
 		font-size: 12px;
 		color: $text-muted;
@@ -47,6 +54,19 @@
 		gap: 6px;
 		flex-shrink: 0;
 	}
+}
+
+.deck-tag-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 1px 7px;
+	border-radius: $radius-pill;
+	font-size: 12px;
+	font-weight: 600;
+	background: var(--tag-bg, #6b728026);
+	color: var(--tag-color, #6b7280);
+	border: 1.5px solid var(--tag-color, #6b7280);
+	white-space: nowrap;
 }
 
 .study-header {

@@ -8,6 +8,7 @@ import { DECK_COLORS } from "../types";
 import type { Deck } from "../types";
 
 let _outsideClickHandler: ((e: Event) => void) | null = null;
+let _escapeKeyHandler: ((e: KeyboardEvent) => void) | null = null;
 
 function getDeckColorHex(colorKey: string | undefined): string {
 	return DECK_COLORS.find((c) => c.key === colorKey)?.hex ?? "";
@@ -46,6 +47,7 @@ function deckCardHtml(deck: Deck): string {
     <div class="deck-card" data-id="${deck.id}">
       <div class="deck-card__icon" aria-hidden="true"${iconStyle}><i data-lucide="book-open"></i></div>
       <div class="deck-card__info">
+        ${(deck.tags ?? []).length > 0 ? `<div class="deck-card__tags">${(deck.tags ?? []).map((name) => { const hex = state.userTags.find((t) => t.name === name)?.color ?? "#6b7280"; return `<span class="deck-tag-pill" style="--tag-color:${hex};--tag-bg:${hex}1a;">${esc(name)}</span>`; }).join("")}</div>` : ""}
         <div class="deck-card__name">${colorDot}${esc(deck.name)}</div>
         <div class="deck-card__meta">
           ${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}
@@ -89,34 +91,38 @@ export function renderHome(): string {
 
 	const visibleDecks = filterDecks();
 
-	// Tag filter bar: uses the global tag library (with colors)
-	const tagFilterHtml = state.userTags.length > 0
-		? `<div class="tag-filter" id="tag-filter">
-        <button class="tag-chip ${!state.deckTagFilter ? "tag-chip--active" : ""}" data-tag-filter="">Alle</button>
-        ${state.userTags.map((tag) => `<button class="tag-chip tag-chip--colored ${state.deckTagFilter === tag.name ? "tag-chip--active" : ""}" data-tag-filter="${esc(tag.name)}" style="--tag-color:${tag.color};--tag-color-bg:${tag.color}1a;">${esc(tag.name)}</button>`).join("")}
-      </div>`
-		: "";
+	const hasTags = state.userTags.length > 0;
+	// tagFilterHtml is now inlined inside decksHtml / deck-controls
+	const tagFilterHtml = hasTags; // kept as truthy flag for decksHtml
+
+	const searchHtml = `
+      <div class="deck-search-wrap">
+        <i data-lucide="search" class="deck-search__icon"></i>
+        <input
+          type="search"
+          id="deck-search"
+          class="deck-search"
+          placeholder="Zoeken…"
+          value="${esc(state.deckSearch)}"
+          autocomplete="off"
+        />
+      </div>`;
 
 	const decksHtml = state.decks.length === 0
 		? `<div class="home-empty">
         <i data-lucide="book-open"></i>
         <p>Je hebt nog geen decks. Upload een document hieronder om te beginnen.</p>
       </div>`
-		: `<div class="section-header">
-        <div class="section-title">Mijn decks</div>
-        <div class="deck-search-wrap">
-          <i data-lucide="search" class="deck-search__icon"></i>
-          <input
-            type="search"
-            id="deck-search"
-            class="deck-search"
-            placeholder="Zoeken…"
-            value="${esc(state.deckSearch)}"
-            autocomplete="off"
-          />
-        </div>
+		: `<div class="section-title" style="margin-bottom:0.75rem">Mijn decks</div>
+      <div class="deck-controls">
+        ${tagFilterHtml
+			? `<div class="tag-filter" id="tag-filter">
+            <button class="tag-chip ${!state.deckTagFilter ? "tag-chip--active" : ""}" data-tag-filter="">Alle</button>
+            ${state.userTags.map((tag) => `<button class="tag-chip tag-chip--colored ${state.deckTagFilter === tag.name ? "tag-chip--active" : ""}" data-tag-filter="${esc(tag.name)}" style="--tag-color:${tag.color};--tag-color-bg:${tag.color}1a;">${esc(tag.name)}</button>`).join("")}
+          </div>`
+			: `<div></div>`}
+        ${searchHtml}
       </div>
-      ${tagFilterHtml}
       <div class="deck-list" id="deck-list">
         ${visibleDecks.length > 0
 			? visibleDecks.map(deckCardHtml).join("")
@@ -167,46 +173,82 @@ export function renderHome(): string {
       </div>
     </div>
 
-    <div class="home-hero">
-      <h1>Welkom terug${firstName ? `, ${esc(firstName)}` : ""}!</h1>
-      ${statsHtml}
+    <div class="home-layout">
+      <aside class="home-side">
+        <div class="home-hero">
+          <h1>Welkom terug${firstName ? `, ${esc(firstName)}` : ""}!</h1>
+          ${statsHtml}
+        </div>
+
+        ${apiBannerHtml}
+
+        <div class="add-section">
+          <button class="btn-primary btn-add-deck-trigger" id="btn-open-add-modal">
+            <i data-lucide="plus"></i> Deck toevoegen
+          </button>
+        </div>
+
+        ${apiSettingsHtml}
+      </aside>
+
+      <main class="home-main">
+        ${decksHtml}
+      </main>
     </div>
 
-    ${apiBannerHtml}
-    ${decksHtml}
+    <button class="fab" id="fab-add-deck" title="Deck toevoegen" aria-label="Deck toevoegen">
+      <i data-lucide="plus"></i>
+    </button>
 
-    <div class="add-section">
-      <div class="section-title">Deck toevoegen</div>
-      <div class="upload-zone ${!hasKey ? "disabled" : ""}" id="upload-zone" role="button" tabindex="0" aria-label="Document uploaden">
-        <input type="file" id="file-input" accept=".pdf,.txt,.md" multiple />
-        <div class="upload-zone__icon"></div>
-        <div class="upload-zone__title">Klik of sleep een document</div>
-        <div class="upload-zone__sub">PDF, TXT of Markdown</div>
-      </div>
-      <div class="add-actions">
-        <input type="file" id="json-input" accept=".json" style="display:none" />
-        <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Importeren via JSON</button>
-        <button class="btn" id="btn-join-duel-toggle"><i data-lucide="swords"></i> Duel meedoen</button>
-        <button class="btn" id="btn-share-import-toggle"><i data-lucide="share-2"></i> Deck overnemen</button>
-      </div>
-      <div class="duel-join-panel hidden" id="duel-join-panel">
-        <div class="duel-join-form">
-          <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-          <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
+    <div class="modal-overlay hidden" id="add-deck-modal" role="dialog" aria-modal="true" aria-labelledby="add-deck-modal-title">
+      <div class="modal-glass">
+        <div class="modal-glass__header">
+          <span class="modal-glass__title" id="add-deck-modal-title">Deck toevoegen</span>
+          <button class="btn-icon modal-glass__close" id="modal-close" title="Sluiten" aria-label="Sluiten">
+            <i data-lucide="x"></i>
+          </button>
         </div>
-        <p id="duel-home-error" class="duel-lobby__error hidden"></p>
-      </div>
-      <div class="duel-join-panel hidden" id="share-import-panel">
-        <div class="duel-join-form">
-          <input type="text" id="share-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
-          <button class="btn-primary" id="btn-import-by-code">Overnemen <i data-lucide="arrow-right"></i></button>
+        <div class="modal-glass__body">
+          <div class="upload-zone ${!hasKey ? "disabled" : ""}" id="upload-zone" role="button" tabindex="0" aria-label="Document uploaden">
+            <input type="file" id="file-input" accept=".pdf,.txt,.md" multiple />
+            <div class="upload-zone__icon"></div>
+            <div class="upload-zone__title">Klik of sleep een document</div>
+            <div class="upload-zone__sub">PDF, TXT of Markdown</div>
+          </div>
+          <div class="add-actions">
+            <input type="file" id="json-input" accept=".json" style="display:none" />
+            <button class="btn" id="btn-import-json"><i data-lucide="upload"></i> Importeren via JSON</button>
+            <button class="btn" id="btn-join-duel-toggle"><i data-lucide="swords"></i> Duel meedoen</button>
+            <button class="btn" id="btn-share-import-toggle"><i data-lucide="share-2"></i> Deck overnemen</button>
+          </div>
+          <div class="duel-join-panel hidden" id="duel-join-panel">
+            <div class="duel-join-form">
+              <input type="text" id="duel-code-home" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
+              <button class="btn-primary" id="btn-home-join-duel">Meedoen <i data-lucide="arrow-right"></i></button>
+            </div>
+            <p id="duel-home-error" class="duel-lobby__error hidden"></p>
+          </div>
+          <div class="duel-join-panel hidden" id="share-import-panel">
+            <div class="duel-join-form">
+              <input type="text" id="share-code-input" placeholder="ABC123" maxlength="6" autocomplete="off" autocapitalize="characters" />
+              <button class="btn-primary" id="btn-import-by-code">Overnemen <i data-lucide="arrow-right"></i></button>
+            </div>
+            <p id="share-import-error" class="duel-lobby__error hidden"></p>
+          </div>
         </div>
-        <p id="share-import-error" class="duel-lobby__error hidden"></p>
       </div>
     </div>
-
-    ${apiSettingsHtml}
   `;
+}
+
+function openAddDeckModal(): void {
+	document.getElementById("add-deck-modal")?.classList.remove("hidden");
+	document.body.style.overflow = "hidden";
+}
+
+function closeAddDeckModal(): void {
+	document.getElementById("add-deck-modal")?.classList.add("hidden");
+	document.body.style.overflow = "";
 }
 
 export function bindHomeEvents(
@@ -340,6 +382,26 @@ export function bindHomeEvents(
 		state.decks = [];
 		render();
 	});
+
+	// ── Add deck modal ────────────────────────────────────────────────────────
+
+	// Reset scroll lock from any previous modal open
+	document.body.style.overflow = "";
+
+	document.getElementById("btn-open-add-modal")?.addEventListener("click", openAddDeckModal);
+	document.getElementById("fab-add-deck")?.addEventListener("click", openAddDeckModal);
+	document.getElementById("modal-close")?.addEventListener("click", closeAddDeckModal);
+	document.getElementById("add-deck-modal")?.addEventListener("click", (e) => {
+		if ((e.target as HTMLElement).id === "add-deck-modal") closeAddDeckModal();
+	});
+
+	if (_escapeKeyHandler) document.removeEventListener("keydown", _escapeKeyHandler);
+	_escapeKeyHandler = (e: KeyboardEvent) => {
+		if (e.key === "Escape" && !document.getElementById("add-deck-modal")?.classList.contains("hidden")) {
+			closeAddDeckModal();
+		}
+	};
+	document.addEventListener("keydown", _escapeKeyHandler);
 
 	document.getElementById("api-save")?.addEventListener("click", () => {
 		const input = document.getElementById("api-input") as HTMLInputElement;
