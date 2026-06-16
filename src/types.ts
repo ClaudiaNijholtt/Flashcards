@@ -77,6 +77,7 @@ export interface AppState {
   missed: Flashcard[];
   cardQualities: Record<string, Quality>; // cardId → quality
   studyStartTime: number;
+  lastCardSnapshot: { cardIndex: number; correct: number; wrong: number; missed: Flashcard[]; qualities: Record<string, Quality> } | null;
   apiKey: string;
   isGenerating: boolean;
   generationProgress: string;

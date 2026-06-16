@@ -13,6 +13,7 @@ export const state: AppState = {
 	missed: [],
 	cardQualities: {},
 	studyStartTime: 0,
+	lastCardSnapshot: null,
 	deckPlayCounts: {},
 	deckSearch: "",
 	apiKey: loadApiKey(),

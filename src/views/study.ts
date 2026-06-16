@@ -47,6 +47,7 @@ export function startStudy(deckId: string, render: () => void): void {
 	state.missed = [];
 	state.cardQualities = {};
 	state.studyStartTime = 0;
+	state.lastCardSnapshot = null;
 	const deck = getActiveDeck();
 	if (deck) deck.cards = shuffle(deck.cards);
 	state.view = "study-mode-pick";
@@ -115,6 +116,7 @@ function renderStudyFlashcard(deck: Deck): string {
     <div class="nav-row">
       <button class="btn" id="btn-prev" ${state.cardIndex === 0 ? "disabled" : ""}><i data-lucide="arrow-left"></i> Vorige</button>
       <button class="btn" id="btn-shuffle"><i data-lucide="shuffle"></i> Schudden</button>
+      <button class="btn" id="btn-undo" ${!state.lastCardSnapshot ? "disabled" : ""} title="Beoordeling ongedaan maken"><i data-lucide="rotate-ccw"></i> Ongedaan</button>
       <button class="btn" id="btn-next" ${state.cardIndex === deck.cards.length - 1 ? "disabled" : ""}>Volgende <i data-lucide="arrow-right"></i></button>
     </div>
 
@@ -123,6 +125,7 @@ function renderStudyFlashcard(deck: Deck): string {
       <span><span class="kbd">←</span><span class="kbd">→</span> navigeren</span>
       <span><span class="kbd">1</span> niet &nbsp;<span class="kbd">2</span> twijfel &nbsp;<span class="kbd">3</span> geweten</span>
       <span><span class="kbd">S</span> schudden</span>
+      <span><span class="kbd">U</span> ongedaan</span>
     </div>
   `;
 }
@@ -255,6 +258,15 @@ export function markCard(quality: Quality, render: () => void): void {
 	const deck = getActiveDeck();
 	if (!deck) return;
 
+	// Save snapshot so the user can undo this rating
+	state.lastCardSnapshot = {
+		cardIndex: state.cardIndex,
+		correct: state.correct,
+		wrong: state.wrong,
+		missed: [...state.missed],
+		qualities: { ...state.cardQualities },
+	};
+
 	const card = deck.cards[state.cardIndex];
 	const cid = cardId(card);
 	state.cardQualities[cid] = quality;
@@ -274,6 +286,19 @@ export function markCard(quality: Quality, render: () => void): void {
 		state.view = "done";
 		render();
 	}
+}
+
+export function undoLastCard(render: () => void): void {
+	const snap = state.lastCardSnapshot;
+	if (!snap) return;
+	state.cardIndex = snap.cardIndex;
+	state.correct = snap.correct;
+	state.wrong = snap.wrong;
+	state.missed = snap.missed;
+	state.cardQualities = snap.qualities;
+	state.flipped = false;
+	state.lastCardSnapshot = null;
+	render();
 }
 
 function doShuffle(render: () => void): void {
@@ -492,6 +517,7 @@ export function bindStudyEvents(render: () => void): void {
 		}
 	});
 	document.getElementById("btn-shuffle")?.addEventListener("click", () => doShuffle(render));
+	document.getElementById("btn-undo")?.addEventListener("click", () => undoLastCard(render));
 
 	setupShake(render);
 }

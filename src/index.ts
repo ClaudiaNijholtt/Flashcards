@@ -6,7 +6,7 @@ import { loadDecks, clearLocalDecks } from "./utils/storage";
 import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { renderHome, bindHomeEvents } from "./views/home";
-import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, getActiveDeck } from "./views/study";
+import { renderStudy, bindStudyEvents, startStudy, handleCardClick, markCard, undoLastCard, getActiveDeck } from "./views/study";
 import { renderStudyModePick, bindStudyModePickEvents } from "./views/study-mode-pick";
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
@@ -210,6 +210,10 @@ document.addEventListener("keydown", (e) => {
 			break;
 		case "3":
 			markCard(2, render);
+			break;
+		case "u":
+		case "U":
+			undoLastCard(render);
 			break;
 		case "s":
 		case "S":
