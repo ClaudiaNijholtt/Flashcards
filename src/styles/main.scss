@@ -24,6 +24,21 @@ body {
   max-width: 680px;
   margin: 0 auto;
   padding: 1.75rem 1.25rem 4rem;
+
+  @media (min-width: 900px) {
+    max-width: 1120px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+// Prevent iOS Safari auto-zoom on inputs with font-size < 16px
+@media (max-width: 600px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
 }
 
 .hidden { display: none !important; }
