@@ -4,6 +4,22 @@ export interface Flashcard {
   answer: string;
 }
 
+export interface UserTag {
+  name: string;
+  color: string; // hex value, e.g. "#3b82f6"
+}
+
+export const DECK_COLORS: { key: string; label: string; hex: string }[] = [
+  { key: "blue",   label: "Blauw",  hex: "#3b82f6" },
+  { key: "purple", label: "Paars",  hex: "#8b5cf6" },
+  { key: "green",  label: "Groen",  hex: "#22c55e" },
+  { key: "yellow", label: "Geel",   hex: "#eab308" },
+  { key: "orange", label: "Oranje", hex: "#f97316" },
+  { key: "red",    label: "Rood",   hex: "#ef4444" },
+  { key: "pink",   label: "Roze",   hex: "#ec4899" },
+  { key: "teal",   label: "Teal",   hex: "#14b8a6" },
+];
+
 export interface Deck {
   id: string;
   name: string;
@@ -11,6 +27,8 @@ export interface Deck {
   createdAt: Date;
   creatorUsername?: string;
   playCount?: number;
+  tags?: string[];
+  color?: string;
 }
 
 export interface AuthUser {
@@ -70,6 +88,8 @@ export interface AppState {
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
   deckSearch: string;
+  deckTagFilter: string;
+  userTags: UserTag[];
   streak: number;
   deckDueCounts: Record<string, number>;
   activeDeckId: string | null;

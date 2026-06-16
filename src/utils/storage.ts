@@ -1,8 +1,9 @@
-import type { Deck } from '../types';
+import type { Deck, UserTag } from '../types';
 
 const KEYS = {
   apiKey: 'fc_api_key',
   decks: 'fc_decks',
+  userTags: 'fc_user_tags',
 } as const;
 
 export function saveApiKey(key: string): void {
@@ -48,4 +49,17 @@ export function deleteDeck(id: string, decks: Deck[]): Deck[] {
 
 export function clearLocalDecks(): void {
   localStorage.removeItem(KEYS.decks);
+}
+
+export function saveUserTags(tags: UserTag[]): void {
+  localStorage.setItem(KEYS.userTags, JSON.stringify(tags));
+}
+
+export function loadUserTags(): UserTag[] {
+  try {
+    const raw = localStorage.getItem(KEYS.userTags);
+    return raw ? (JSON.parse(raw) as UserTag[]) : [];
+  } catch {
+    return [];
+  }
 }

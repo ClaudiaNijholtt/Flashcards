@@ -2,7 +2,7 @@ import "./styles/main.scss";
 import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2 } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
-import { loadDecks, clearLocalDecks } from "./utils/storage";
+import { loadDecks, clearLocalDecks, saveUserTags } from "./utils/storage";
 import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { fetchStreak, fetchAllDueCounts } from "./services/srs";
@@ -149,6 +149,11 @@ async function onLogin(user: AuthUser): Promise<void> {
 	const profile = await fetchProfile(user.id);
 	if (profile) {
 		state.user.username = profile.username;
+		// Supabase tags take priority over localStorage; sync back so offline also works
+		if (profile.tagLibrary.length > 0) {
+			state.userTags = profile.tagLibrary;
+			saveUserTags(profile.tagLibrary);
+		}
 	}
 
 	// Migrate localStorage decks to Supabase on first login

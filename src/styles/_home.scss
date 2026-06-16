@@ -291,6 +291,73 @@
 	}
 }
 
+// ── Tag filter bar ────────────────────────────────────────────────────────────
+
+.tag-filter {
+	display: flex;
+	gap: 6px;
+	overflow-x: auto;
+	padding-bottom: 0.75rem;
+	margin-bottom: 0.25rem;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar { display: none; }
+}
+
+.tag-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 4px 12px;
+	border: 1.5px solid $border-mid;
+	border-radius: $radius-pill;
+	font-size: 12px;
+	font-weight: 500;
+	background: $surface;
+	color: $text-muted;
+	cursor: pointer;
+	white-space: nowrap;
+	flex-shrink: 0;
+	transition: border-color $transition, background $transition, color $transition;
+
+	&:hover {
+		border-color: $text;
+		color: $text;
+	}
+
+	&--active {
+		background: $text;
+		color: $bg;
+		border-color: $text;
+	}
+
+	// Colored variant: tag has its own color via CSS custom property
+	&--colored {
+		border-color: var(--tag-color);
+		color: var(--tag-color);
+		background: transparent;
+
+		&:hover { background: var(--tag-color-bg); }
+
+		&.tag-chip--active {
+			background: var(--tag-color);
+			color: #fff;
+			border-color: var(--tag-color);
+		}
+	}
+}
+
+// ── Deck color dot ────────────────────────────────────────────────────────────
+
+.deck-color-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	margin-right: 5px;
+	vertical-align: 1px;
+	flex-shrink: 0;
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 .home-empty {

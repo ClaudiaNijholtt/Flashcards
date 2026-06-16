@@ -1,11 +1,53 @@
 import { state } from "../state";
 import { esc, showToast } from "../utils/helpers";
-import { renameDeck, updateDeckCards } from "../services/decks";
-import type { Flashcard } from "../types";
+import { updateDeckMeta, updateDeckCards } from "../services/decks";
+import { saveTagLibrary } from "../services/profiles";
+import { saveUserTags } from "../utils/storage";
+import { DECK_COLORS } from "../types";
+import type { Flashcard, UserTag } from "../types";
+
+let _editingTags: string[] = [];
+let _newTagColor: string = DECK_COLORS[0].hex;
+
+function tagHex(name: string): string {
+	return state.userTags.find((t) => t.name === name)?.color ?? "#6b7280";
+}
+
+function renderSelectedChips(): string {
+	if (_editingTags.length === 0) {
+		return `<span class="tag-editor__empty">Geen tags — klik op Toevoegen</span>`;
+	}
+	return _editingTags.map((name) => {
+		const hex = tagHex(name);
+		return `<button type="button" class="tag-chip-deck" data-tag-remove="${esc(name)}" style="--chip-color:${hex};--chip-bg:${hex}26;--chip-border:${hex}66;" title="${esc(name)} verwijderen">
+			${esc(name)} <span class="tag-chip-deck__x" aria-hidden="true">×</span>
+		</button>`;
+	}).join("");
+}
+
+function renderAvailableChips(): string {
+	const available = state.userTags.filter((t) => !_editingTags.includes(t.name));
+	if (state.userTags.length === 0) {
+		return `<span class="tag-editor__hint">Maak hieronder je eerste tag aan</span>`;
+	}
+	if (available.length === 0) {
+		return `<span class="tag-editor__hint">Alle tags zijn al toegevoegd</span>`;
+	}
+	return available.map((tag) =>
+		`<button type="button" class="tag-chip-add" data-tag-add="${esc(tag.name)}" style="--chip-color:${tag.color};--chip-bg:${tag.color}26;">${esc(tag.name)}</button>`,
+	).join("");
+}
 
 export function renderDeckEdit(): string {
 	const deck = state.decks.find((d) => d.id === state.editDeckId);
 	if (!deck) return `<p>Deck niet gevonden.</p>`;
+
+	_editingTags = [...(deck.tags ?? [])];
+	_newTagColor = DECK_COLORS[0].hex;
+
+	const colorSwatchesForNewTag = DECK_COLORS.map((c, i) =>
+		`<button type="button" class="color-swatch ${i === 0 ? "color-swatch--active" : ""}" data-new-tag-color="${c.hex}" title="${c.label}" style="--swatch-color:${c.hex}"></button>`,
+	).join("");
 
 	const cardsHtml = deck.cards
 		.map(
@@ -13,18 +55,8 @@ export function renderDeckEdit(): string {
 		<div class="card-edit-row" data-card-id="${esc(card.id)}">
 			<div class="card-edit-row__num">${i + 1}</div>
 			<div class="card-edit-fields">
-				<textarea
-					class="card-edit-question"
-					rows="3"
-					placeholder="Vraag"
-					aria-label="Vraag ${i + 1}"
-				>${esc(card.question)}</textarea>
-				<textarea
-					class="card-edit-answer"
-					rows="3"
-					placeholder="Antwoord"
-					aria-label="Antwoord ${i + 1}"
-				>${esc(card.answer)}</textarea>
+				<textarea class="card-edit-question" rows="3" placeholder="Vraag" aria-label="Vraag ${i + 1}">${esc(card.question)}</textarea>
+				<textarea class="card-edit-answer" rows="3" placeholder="Antwoord" aria-label="Antwoord ${i + 1}">${esc(card.answer)}</textarea>
 			</div>
 			<button class="btn-icon card-edit-row__delete" data-delete-card title="Kaart verwijderen" aria-label="Kaart verwijderen">
 				<i data-lucide="trash-2"></i>
@@ -52,6 +84,27 @@ export function renderDeckEdit(): string {
 				</button>
 			</div>
 
+			<div class="deck-edit-section">
+				<label class="deck-edit-label">Tags</label>
+				<div class="tag-editor">
+					<div class="tag-editor__chips" id="tag-editor-selected">${renderSelectedChips()}</div>
+					<button type="button" class="tag-editor__toggle" id="tag-editor-open">
+						<i data-lucide="plus"></i> Toevoegen
+					</button>
+				</div>
+				<div class="tag-editor__panel hidden" id="tag-editor-panel">
+					<div class="tag-editor__avail-label">Klik om toe te voegen</div>
+					<div class="tag-editor__avail" id="tag-editor-available">${renderAvailableChips()}</div>
+					<div class="tag-editor__new">
+						<div class="tag-editor__new-row">
+							<input type="text" id="tag-new-name" class="tag-editor__new-input" placeholder="Nieuwe tag naam…" maxlength="32" autocomplete="off" />
+							<button type="button" class="btn-primary" id="tag-new-submit">Aanmaken</button>
+						</div>
+						<div class="color-picker" id="tag-new-colors">${colorSwatchesForNewTag}</div>
+					</div>
+				</div>
+			</div>
+
 			<div class="card-edit-list" id="card-edit-list">
 				${cardsHtml}
 			</div>
@@ -66,25 +119,76 @@ export function renderDeckEdit(): string {
 }
 
 export function bindDeckEditEvents(render: () => void): void {
-	// Back button
 	document.getElementById("deck-edit-back")?.addEventListener("click", () => {
 		state.view = "home";
 		render();
 	});
 
-	// Delete card buttons (event delegation on the list)
+	// ── Tag editor ────────────────────────────────────────────────────────────
+
+	document.getElementById("tag-editor-open")?.addEventListener("click", () => {
+		const panel = document.getElementById("tag-editor-panel");
+		panel?.classList.toggle("hidden");
+		if (!panel?.classList.contains("hidden")) {
+			(document.getElementById("tag-new-name") as HTMLInputElement | null)?.focus();
+		}
+	});
+
+	document.getElementById("tag-editor-selected")?.addEventListener("click", (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-tag-remove]");
+		if (!btn) return;
+		_editingTags = _editingTags.filter((t) => t !== btn.dataset.tagRemove);
+		updateTagEditorDOM();
+	});
+
+	document.getElementById("tag-editor-available")?.addEventListener("click", (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-tag-add]");
+		if (!btn) return;
+		const name = btn.dataset.tagAdd ?? "";
+		if (name && !_editingTags.includes(name)) _editingTags.push(name);
+		updateTagEditorDOM();
+	});
+
+	document.getElementById("tag-new-colors")?.addEventListener("click", (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-new-tag-color]");
+		if (!btn) return;
+		_newTagColor = btn.dataset.newTagColor ?? DECK_COLORS[0].hex;
+		document.querySelectorAll<HTMLElement>("#tag-new-colors .color-swatch").forEach((s) => s.classList.remove("color-swatch--active"));
+		btn.classList.add("color-swatch--active");
+	});
+
+	const tagNameInput = document.getElementById("tag-new-name") as HTMLInputElement | null;
+	tagNameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter") document.getElementById("tag-new-submit")?.click(); });
+
+	document.getElementById("tag-new-submit")?.addEventListener("click", async () => {
+		const name = tagNameInput?.value.trim() ?? "";
+		if (!name) { showToast("Geef de tag een naam", true); return; }
+		if (state.userTags.some((t) => t.name.toLowerCase() === name.toLowerCase())) {
+			showToast("Er bestaat al een tag met deze naam", true); return;
+		}
+		const newTag: UserTag = { name, color: _newTagColor };
+		state.userTags.push(newTag);
+		_editingTags.push(name);
+		if (tagNameInput) tagNameInput.value = "";
+
+		// Save locally first (always works), then sync to Supabase in background
+		saveUserTags(state.userTags);
+		if (state.user) void saveTagLibrary(state.userTags);
+
+		updateTagEditorDOM();
+		showToast(`Tag "${name}" aangemaakt ✓`);
+	});
+
+	// ── Card list ─────────────────────────────────────────────────────────────
+
 	const cardList = document.getElementById("card-edit-list");
 	cardList?.addEventListener("click", (e) => {
 		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-delete-card]");
 		if (!btn) return;
-		const row = btn.closest<HTMLElement>(".card-edit-row");
-		if (!row) return;
-		row.remove();
-		// Re-number remaining rows
+		btn.closest<HTMLElement>(".card-edit-row")?.remove();
 		renumberRows();
 	});
 
-	// Add card button
 	document.getElementById("deck-edit-add-card")?.addEventListener("click", () => {
 		const list = document.getElementById("card-edit-list");
 		if (!list) return;
@@ -96,59 +200,43 @@ export function bindDeckEditEvents(render: () => void): void {
 		row.innerHTML = `
 			<div class="card-edit-row__num">${count}</div>
 			<div class="card-edit-fields">
-				<textarea
-					class="card-edit-question"
-					rows="3"
-					placeholder="Vraag"
-					aria-label="Vraag ${count}"
-				></textarea>
-				<textarea
-					class="card-edit-answer"
-					rows="3"
-					placeholder="Antwoord"
-					aria-label="Antwoord ${count}"
-				></textarea>
+				<textarea class="card-edit-question" rows="3" placeholder="Vraag" aria-label="Vraag ${count}"></textarea>
+				<textarea class="card-edit-answer" rows="3" placeholder="Antwoord" aria-label="Antwoord ${count}"></textarea>
 			</div>
 			<button class="btn-icon card-edit-row__delete" data-delete-card title="Kaart verwijderen" aria-label="Kaart verwijderen">
 				<i data-lucide="trash-2"></i>
 			</button>
 		`;
 		list.appendChild(row);
-		// Render the Lucide icon in the new row
 		import("lucide").then(({ createIcons, Trash2 }) => createIcons({ icons: { Trash2 } }));
 		row.querySelector("textarea")?.focus();
 	});
 
-	// Save button
+	// ── Save ──────────────────────────────────────────────────────────────────
+
 	document.getElementById("deck-edit-save")?.addEventListener("click", async () => {
 		const deck = state.decks.find((d) => d.id === state.editDeckId);
 		if (!deck) return;
 
 		const nameInput = document.getElementById("deck-edit-name") as HTMLInputElement | null;
 		const newName = nameInput?.value.trim() ?? deck.name;
-		if (!newName) {
-			showToast("Decknaam mag niet leeg zijn", true);
-			return;
-		}
+		if (!newName) { showToast("Decknaam mag niet leeg zijn", true); return; }
 
-		// Collect all card rows from DOM
 		const rows = document.querySelectorAll<HTMLElement>(".card-edit-row");
 		const cards: Flashcard[] = [];
 		for (const row of rows) {
 			const question = (row.querySelector(".card-edit-question") as HTMLTextAreaElement | null)?.value.trim() ?? "";
 			const answer = (row.querySelector(".card-edit-answer") as HTMLTextAreaElement | null)?.value.trim() ?? "";
-			const id = row.dataset.cardId ?? crypto.randomUUID();
-			cards.push({ id, question, answer });
+			cards.push({ id: row.dataset.cardId ?? crypto.randomUUID(), question, answer });
 		}
 
-		// Update state
 		deck.name = newName;
 		deck.cards = cards;
+		deck.tags = [..._editingTags];
 
-		// Persist to Supabase if logged in
 		if (state.user) {
 			try {
-				await renameDeck(deck.id, newName);
+				await updateDeckMeta(deck.id, newName, [..._editingTags], deck.color ?? "");
 				await updateDeckCards(deck.id, cards);
 			} catch (err) {
 				showToast(err instanceof Error ? err.message : "Opslaan mislukt", true);
@@ -162,9 +250,15 @@ export function bindDeckEditEvents(render: () => void): void {
 	});
 }
 
+function updateTagEditorDOM(): void {
+	const sel = document.getElementById("tag-editor-selected");
+	if (sel) sel.innerHTML = renderSelectedChips();
+	const avail = document.getElementById("tag-editor-available");
+	if (avail) avail.innerHTML = renderAvailableChips();
+}
+
 function renumberRows(): void {
-	const rows = document.querySelectorAll<HTMLElement>(".card-edit-row");
-	rows.forEach((row, i) => {
+	document.querySelectorAll<HTMLElement>(".card-edit-row").forEach((row, i) => {
 		const numEl = row.querySelector<HTMLElement>(".card-edit-row__num");
 		if (numEl) numEl.textContent = String(i + 1);
 	});

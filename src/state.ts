@@ -1,5 +1,5 @@
 import type { AppState } from "./types";
-import { loadApiKey, loadDecks } from "./utils/storage";
+import { loadApiKey, loadDecks, loadUserTags } from "./utils/storage";
 
 export const state: AppState = {
 	view: "home",
@@ -17,6 +17,8 @@ export const state: AppState = {
 	lastCardSnapshot: null,
 	deckPlayCounts: {},
 	deckSearch: "",
+	deckTagFilter: "",
+	userTags: loadUserTags(),
 	streak: 0,
 	deckDueCounts: {},
 	studyCards: null,

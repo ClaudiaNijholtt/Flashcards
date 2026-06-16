@@ -4,9 +4,24 @@ import { saveApiKey, saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
 import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
+import { DECK_COLORS } from "../types";
 import type { Deck } from "../types";
 
 let _outsideClickHandler: ((e: Event) => void) | null = null;
+
+function getDeckColorHex(colorKey: string | undefined): string {
+	return DECK_COLORS.find((c) => c.key === colorKey)?.hex ?? "";
+}
+
+function filterDecks(): Deck[] {
+	const q = state.deckSearch.toLowerCase();
+	const tagF = state.deckTagFilter;
+	return state.decks.filter((d) => {
+		const matchSearch = !q || d.name.toLowerCase().includes(q);
+		const matchTag = !tagF || (d.tags ?? []).includes(tagF);
+		return matchSearch && matchTag;
+	});
+}
 
 function deckMoreHtml(id: string): string {
 	return `
@@ -19,6 +34,31 @@ function deckMoreHtml(id: string): string {
         <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
         <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
         <button class="deck-more__item deck-more__item--danger" data-delete="${id}"><i data-lucide="trash-2"></i> Verwijderen</button>
+      </div>
+    </div>`;
+}
+
+function deckCardHtml(deck: Deck): string {
+	const hex = getDeckColorHex(deck.color);
+	const colorDot = hex ? `<span class="deck-color-dot" style="background:${hex}"></span>` : "";
+	const iconStyle = hex ? ` style="color:${hex}"` : "";
+	return `
+    <div class="deck-card" data-id="${deck.id}">
+      <div class="deck-card__icon" aria-hidden="true"${iconStyle}><i data-lucide="book-open"></i></div>
+      <div class="deck-card__info">
+        <div class="deck-card__name">${colorDot}${esc(deck.name)}</div>
+        <div class="deck-card__meta">
+          ${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}
+          ${deck.creatorUsername ? `&nbsp;·&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
+          ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;·&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
+        </div>
+      </div>
+      <div class="deck-card__actions">
+        <div class="deck-card__primary">
+          ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
+          <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
+        </div>
+        ${deckMoreHtml(deck.id)}
       </div>
     </div>`;
 }
@@ -47,30 +87,15 @@ export function renderHome(): string {
       </div>`
 		: streakHtml ? `<div class="home-stats">${streakHtml}</div>` : "";
 
-	const q = state.deckSearch.toLowerCase();
-	const visibleDecks = q
-		? state.decks.filter((d) => d.name.toLowerCase().includes(q))
-		: state.decks;
+	const visibleDecks = filterDecks();
 
-	const deckListHtml = (decks: typeof state.decks) => decks.map((deck) => `
-          <div class="deck-card" data-id="${deck.id}">
-            <div class="deck-card__icon" aria-hidden="true"><i data-lucide="book-open"></i></div>
-            <div class="deck-card__info">
-              <div class="deck-card__name">${esc(deck.name)}</div>
-              <div class="deck-card__meta">
-                ${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}
-                ${deck.creatorUsername ? `&nbsp;·&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
-                ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;·&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
-              </div>
-            </div>
-            <div class="deck-card__actions">
-              <div class="deck-card__primary">
-                ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
-                <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
-              </div>
-              ${deckMoreHtml(deck.id)}
-            </div>
-          </div>`).join("");
+	// Tag filter bar: uses the global tag library (with colors)
+	const tagFilterHtml = state.userTags.length > 0
+		? `<div class="tag-filter" id="tag-filter">
+        <button class="tag-chip ${!state.deckTagFilter ? "tag-chip--active" : ""}" data-tag-filter="">Alle</button>
+        ${state.userTags.map((tag) => `<button class="tag-chip tag-chip--colored ${state.deckTagFilter === tag.name ? "tag-chip--active" : ""}" data-tag-filter="${esc(tag.name)}" style="--tag-color:${tag.color};--tag-color-bg:${tag.color}1a;">${esc(tag.name)}</button>`).join("")}
+      </div>`
+		: "";
 
 	const decksHtml = state.decks.length === 0
 		? `<div class="home-empty">
@@ -91,10 +116,11 @@ export function renderHome(): string {
           />
         </div>
       </div>
+      ${tagFilterHtml}
       <div class="deck-list" id="deck-list">
         ${visibleDecks.length > 0
-			? deckListHtml(visibleDecks)
-			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`}
+			? visibleDecks.map(deckCardHtml).join("")
+			: `<div class="home-empty"><p>Geen decks gevonden${state.deckTagFilter ? ` voor tag "<strong>${esc(state.deckTagFilter)}</strong>"` : state.deckSearch ? ` voor "<strong>${esc(state.deckSearch)}</strong>"` : ""}.</p></div>`}
       </div>`;
 
 	const apiBannerHtml = !hasKey
@@ -207,31 +233,25 @@ export function bindHomeEvents(
 
 	document.getElementById("btn-profile")?.addEventListener("click", goToProfile);
 
+	// Tag filter chips
+	document.getElementById("tag-filter")?.addEventListener("click", (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-tag-filter]");
+		if (!btn || !("tagFilter" in btn.dataset)) return;
+		state.deckTagFilter = btn.dataset.tagFilter ?? "";
+		render();
+	});
+
 	const searchInput = document.getElementById("deck-search") as HTMLInputElement | null;
 	searchInput?.addEventListener("input", () => {
 		state.deckSearch = searchInput.value;
 		const list = document.getElementById("deck-list");
 		if (!list) return;
-		const q = state.deckSearch.toLowerCase();
-		const visible = q ? state.decks.filter((d) => d.name.toLowerCase().includes(q)) : state.decks;
+		const visible = filterDecks();
 		list.innerHTML = visible.length > 0
-			? visible.map((deck) => `
-          <div class="deck-card" data-id="${deck.id}">
-            <div class="deck-card__icon"><i data-lucide="book-open"></i></div>
-            <div class="deck-card__info">
-              <div class="deck-card__name">${esc(deck.name)}</div>
-              <div class="deck-card__meta">${deck.cards.length} kaarten &nbsp;·&nbsp; ${formatDate(deck.createdAt)}</div>
-            </div>
-            <div class="deck-card__actions">
-              <div class="deck-card__primary">
-                <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
-              </div>
-              ${deckMoreHtml(deck.id)}
-            </div>
-          </div>`).join("")
-			: `<div class="home-empty"><p>Geen decks gevonden voor "<strong>${esc(state.deckSearch)}</strong>".</p></div>`;
-		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis }) =>
-			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis } }));
+			? visible.map(deckCardHtml).join("")
+			: `<div class="home-empty"><p>Geen decks gevonden${state.deckTagFilter ? ` voor tag "<strong>${esc(state.deckTagFilter)}</strong>"` : state.deckSearch ? ` voor "<strong>${esc(state.deckSearch)}</strong>"` : ""}.</p></div>`;
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2 }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2 } }));
 		bindDeckCardEvents();
 	});
 
@@ -360,23 +380,6 @@ export function bindHomeEvents(
 		if (files.length) handleFiles(files, render);
 	});
 
-	// Export deck as JSON
-	document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
-		btn.addEventListener("click", (e) => {
-			e.stopPropagation();
-			const deck = state.decks.find((d) => d.id === btn.dataset.export);
-			if (!deck) return;
-			const json = JSON.stringify({ name: deck.name, cards: deck.cards }, null, 2);
-			const blob = new Blob([json], { type: "application/json" });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement("a");
-			a.href = url;
-			a.download = `${deck.name.replace(/[^a-z0-9]/gi, "_")}.json`;
-			a.click();
-			URL.revokeObjectURL(url);
-		});
-	});
-
 	// Import deck from JSON
 	const jsonInput = document.getElementById("json-input") as HTMLInputElement;
 	document.getElementById("btn-import-json")?.addEventListener("click", () => jsonInput.click());
@@ -400,6 +403,8 @@ export function bindHomeEvents(
 				})),
 				createdAt: new Date(),
 				creatorUsername: state.user?.username ?? undefined,
+				tags: [],
+				color: "",
 			};
 			if (state.user) {
 				await insertDeck(deck);
@@ -416,7 +421,7 @@ export function bindHomeEvents(
 		}
 	});
 
-	// Deck: click card or study button → study
+	// Deck card events for initial render
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
@@ -432,7 +437,13 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Share deck
+	document.querySelectorAll<HTMLElement>("[data-due]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startDueStudy(btn.dataset.due!);
+		});
+	});
+
 	document.querySelectorAll<HTMLElement>("[data-share]").forEach((btn) => {
 		btn.addEventListener("click", async (e) => {
 			e.stopPropagation();
@@ -446,7 +457,6 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Edit deck
 	document.querySelectorAll<HTMLElement>("[data-edit]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
@@ -454,7 +464,6 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Delete deck
 	document.querySelectorAll<HTMLElement>("[data-delete]").forEach((btn) => {
 		btn.addEventListener("click", async (e) => {
 			e.stopPropagation();
@@ -474,7 +483,6 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Stats per deck
 	document.querySelectorAll<HTMLElement>("[data-stats]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
@@ -482,11 +490,26 @@ export function bindHomeEvents(
 		});
 	});
 
-	// Duel: start from deck
 	document.querySelectorAll<HTMLElement>("[data-duel]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
 			startDuel(btn.dataset.duel!);
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			const deck = state.decks.find((d) => d.id === btn.dataset.export);
+			if (!deck) return;
+			const json = JSON.stringify({ name: deck.name, cards: deck.cards }, null, 2);
+			const blob = new Blob([json], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${deck.name.replace(/[^a-z0-9]/gi, "_")}.json`;
+			a.click();
+			URL.revokeObjectURL(url);
 		});
 	});
 
@@ -527,6 +550,8 @@ export function bindHomeEvents(
 				cards: cards.map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() })),
 				createdAt: new Date(),
 				creatorUsername,
+				tags: [],
+				color: "",
 			};
 			if (state.user) {
 				await insertDeck(deck);
@@ -615,6 +640,8 @@ async function handleFiles(files: File[], render: () => void): Promise<void> {
 				cards,
 				createdAt: new Date(),
 				creatorUsername: state.user?.username ?? undefined,
+				tags: [],
+				color: "",
 			};
 
 			state.decks.push(deck);
