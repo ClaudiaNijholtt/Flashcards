@@ -3,6 +3,7 @@ import { esc, showToast } from "../utils/helpers";
 import { updateDeckMeta, updateDeckCards } from "../services/decks";
 import { saveTagLibrary } from "../services/profiles";
 import { saveUserTags } from "../utils/storage";
+import { uploadCardImage } from "../services/storage-media";
 import { DECK_COLORS } from "../types";
 import type { Flashcard, UserTag } from "../types";
 
@@ -57,6 +58,11 @@ export function renderDeckEdit(): string {
 			<div class="card-edit-fields">
 				<textarea class="card-edit-question" rows="3" placeholder="Vraag" aria-label="Vraag ${i + 1}">${esc(card.question)}</textarea>
 				<textarea class="card-edit-answer" rows="3" placeholder="Antwoord" aria-label="Antwoord ${i + 1}">${esc(card.answer)}</textarea>
+				<div class="card-image-controls">
+					<button class="btn btn-icon card-image-upload-btn" data-card-id="${esc(card.id)}" title="Afbeelding toevoegen"><i data-lucide="image"></i></button>
+					<input type="file" class="card-image-input" data-card-id="${esc(card.id)}" accept="image/*" style="display:none">
+					${card.imageUrl ? `<img class="card-image-thumb" src="${esc(card.imageUrl)}" alt=""><button class="btn-icon btn-icon--danger card-image-remove" data-card-id="${esc(card.id)}"><i data-lucide="x"></i></button>` : ""}
+				</div>
 			</div>
 			<button class="btn-icon card-edit-row__delete" data-delete-card title="Kaart verwijderen" aria-label="Kaart verwijderen">
 				<i data-lucide="trash-2"></i>
@@ -212,6 +218,45 @@ export function bindDeckEditEvents(render: () => void): void {
 		row.querySelector("textarea")?.focus();
 	});
 
+	// ── Card images ───────────────────────────────────────────────────────────
+
+	document.querySelectorAll<HTMLElement>(".card-image-upload-btn").forEach(btn => {
+		btn.addEventListener("click", () => {
+			const input = document.querySelector<HTMLInputElement>(`.card-image-input[data-card-id="${btn.dataset.cardId}"]`);
+			input?.click();
+		});
+	});
+
+	document.querySelectorAll<HTMLInputElement>(".card-image-input").forEach(input => {
+		input.addEventListener("change", async () => {
+			const file = input.files?.[0];
+			if (!file || !state.user) return;
+			const cardId = input.dataset.cardId!;
+			try {
+				const url = await uploadCardImage(file, state.user.id, cardId);
+				const deck = state.decks.find(d => d.id === state.editDeckId);
+				if (deck) {
+					const card = deck.cards.find(c => c.id === cardId);
+					if (card) {
+						card.imageUrl = url;
+						await updateDeckCards(deck.id, deck.cards);
+					}
+				}
+				render();
+			} catch (err) { showToast(err instanceof Error ? err.message : "Upload mislukt", true); }
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>(".card-image-remove").forEach(btn => {
+		btn.addEventListener("click", async () => {
+			const cardId = btn.dataset.cardId!;
+			const deck = state.decks.find(d => d.id === state.editDeckId);
+			if (!deck) return;
+			const card = deck.cards.find(c => c.id === cardId);
+			if (card) { card.imageUrl = undefined; await updateDeckCards(deck.id, deck.cards); render(); }
+		});
+	});
+
 	// ── Save ──────────────────────────────────────────────────────────────────
 
 	document.getElementById("deck-edit-save")?.addEventListener("click", async () => {
@@ -227,7 +272,9 @@ export function bindDeckEditEvents(render: () => void): void {
 		for (const row of rows) {
 			const question = (row.querySelector(".card-edit-question") as HTMLTextAreaElement | null)?.value.trim() ?? "";
 			const answer = (row.querySelector(".card-edit-answer") as HTMLTextAreaElement | null)?.value.trim() ?? "";
-			cards.push({ id: row.dataset.cardId ?? crypto.randomUUID(), question, answer });
+			const cardId = row.dataset.cardId ?? crypto.randomUUID();
+			const existingCard = deck.cards.find(c => c.id === cardId);
+			cards.push({ id: cardId, question, answer, ...(existingCard?.imageUrl ? { imageUrl: existingCard.imageUrl } : {}) });
 		}
 
 		deck.name = newName;

@@ -2,6 +2,7 @@ export interface Flashcard {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
 }
 
 export interface UserTag {

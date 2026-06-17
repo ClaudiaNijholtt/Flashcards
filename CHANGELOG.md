@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [1.28.0] - 2026-06-17
+
+### Added
+
+- **Afbeeldingen op kaarten**: voeg een afbeelding toe aan elke kaart via de deck-editor; afbeeldingen worden getoond op de flashcard en in de meerkeuze-vraagkaart
+- Afbeeldingen worden opgeslagen in Supabase Storage (bucket `card-images`); vereist eenmalige setup in het Supabase-dashboard (zie `src/services/storage-media.ts`)
+
+---
+
 ## [1.27.0] - 2026-06-17
 
 ### Added
