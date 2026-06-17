@@ -1,0 +1,104 @@
+@use "./variables" as *;
+
+.discover-view {
+  padding-bottom: 3rem;
+}
+
+.discover-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.discover-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.discover-search-wrap {
+  position: relative;
+  margin-bottom: 1.25rem;
+
+  .discover-search__icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    color: $text-muted;
+    pointer-events: none;
+  }
+
+  .discover-search {
+    width: 100%;
+    padding: 0.6rem 0.75rem 0.6rem 2rem;
+    border: 1.5px solid $border-mid;
+    border-radius: $radius-md;
+    font-size: 14px;
+    background: $surface-alt;
+    color: $text;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: $text;
+    }
+  }
+}
+
+.discover-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.discover-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: $surface;
+  border: 1.5px solid $border;
+  border-radius: $radius-lg;
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-weight: 600;
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: 12px;
+    color: $text-muted;
+    margin-top: 2px;
+  }
+
+  &__copy {
+    flex-shrink: 0;
+  }
+}
+
+.discover-empty {
+  text-align: center;
+  padding: 2rem;
+  color: $text-muted;
+}
+
+.discover-loading {
+  text-align: center;
+  padding: 2rem;
+  color: $text-muted;
+}
