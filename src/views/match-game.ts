@@ -46,8 +46,9 @@ export function renderMatchGame(): string {
 		const cards = deck.cards.slice(0, 6);
 		const tiles: Tile[] = [];
 		for (const card of cards) {
-			tiles.push({ id: crypto.randomUUID(), text: card.question, type: "question", pairId: card.id });
-			tiles.push({ id: crypto.randomUUID(), text: card.answer, type: "answer", pairId: card.id });
+			const pairId = crypto.randomUUID();
+			tiles.push({ id: crypto.randomUUID(), text: card.question, type: "question", pairId });
+			tiles.push({ id: crypto.randomUUID(), text: card.answer, type: "answer", pairId });
 		}
 		_tiles = shuffleArray(tiles);
 	}
