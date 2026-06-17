@@ -3,6 +3,7 @@ export interface Flashcard {
   question: string;
   answer: string;
   imageUrl?: string;
+  audioUrl?: string;
 }
 
 export interface UserTag {

@@ -23,6 +23,7 @@ AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcar
 - **Deck editor** — kaarten toevoegen, bewerken, verwijderen; decknaam hernoemen
 - **Donker thema** — wisselt runtime, voorkeur opgeslagen in localStorage
 - **Deck zoeken & filteren** — live filter op naam en tag op de homepagina
+- **Audio op kaarten** — neem audio op of upload een bestand per kaart; afspeelknop zichtbaar tijdens studeren
 - **Ongedaan maken** — laatste kaartbeoordeling terugdraaien (`U`)
 - **Swipe-gebaren & schudden** — navigeren en scoren op mobiel
 - **PWA** — installeerbaar op iOS en Android

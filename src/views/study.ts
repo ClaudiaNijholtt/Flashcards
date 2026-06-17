@@ -125,6 +125,7 @@ function renderStudyFlashcard(deck: Deck): string {
             <div class="face__deck">${esc(deck.name)}</div>
             <div class="face__q">${esc(card.question)}</div>
             ${card.imageUrl ? `<img class="card-study-image" src="${esc(card.imageUrl)}" alt="" loading="lazy">` : ""}
+            ${card.audioUrl ? `<div class="card-audio-wrap"><button class="btn-icon card-audio-play-btn" data-audio-url="${esc(card.audioUrl)}" title="Afspelen"><i data-lucide="volume-2"></i></button></div>` : ""}
             <div class="face__hint">
               <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
               <span class="hint-mobile">Tik om te draaien &nbsp;·&nbsp; veeg ← →</span>
@@ -134,6 +135,7 @@ function renderStudyFlashcard(deck: Deck): string {
             <div class="face__deck">${esc(deck.name)}</div>
             <div class="face__a">${esc(card.answer)}</div>
             ${card.imageUrl ? `<img class="card-study-image" src="${esc(card.imageUrl)}" alt="" loading="lazy">` : ""}
+            ${card.audioUrl ? `<div class="card-audio-wrap"><button class="btn-icon card-audio-play-btn" data-audio-url="${esc(card.audioUrl)}" title="Afspelen"><i data-lucide="volume-2"></i></button></div>` : ""}
             <div class="face__hint">
               <span class="hint-desktop"><span class="kbd">1</span> niet &nbsp;<span class="kbd">2</span> twijfel &nbsp;<span class="kbd">3</span> geweten</span>
               <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → geweten &nbsp;·&nbsp; tik om terug</span>
@@ -660,4 +662,13 @@ export function bindStudyEvents(render: () => void): void {
 	document.getElementById("btn-undo")?.addEventListener("click", () => undoLastCard(render));
 
 	setupShake(render);
+
+	document.querySelectorAll<HTMLElement>(".card-audio-play-btn").forEach(btn => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			const url = btn.dataset.audioUrl!;
+			const audio = new Audio(url);
+			audio.play().catch(() => showToast("Audio afspelen mislukt", true));
+		});
+	});
 }
