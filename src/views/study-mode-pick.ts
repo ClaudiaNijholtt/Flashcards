@@ -5,6 +5,37 @@ import { getActiveDeck } from "./study";
 export function renderStudyModePick(): string {
 	const deck = getActiveDeck();
 	const name = deck ? esc(deck.name) : "dit deck";
+	const hasDeck = state.activeDeckId !== null;
+
+	const speelHtml = hasDeck ? `
+      <h2 class="mode-pick__title" style="margin-top:1.5rem">Spelen</h2>
+
+      <button class="mode-card" id="btn-mode-duel">
+        <div class="mode-card__icon"><i data-lucide="swords"></i></div>
+        <div class="mode-card__body">
+          <div class="mode-card__name">Duel starten</div>
+          <div class="mode-card__desc">Speel dit deck tegelijk met een vriend. Wie is het snelst en meest accuraat?</div>
+        </div>
+        <i data-lucide="arrow-right" class="mode-card__arrow"></i>
+      </button>
+
+      <button class="mode-card" id="btn-mode-quiz">
+        <div class="mode-card__icon"><i data-lucide="layout-grid"></i></div>
+        <div class="mode-card__body">
+          <div class="mode-card__name">Quiz starten</div>
+          <div class="mode-card__desc">Host een live quiz voor meerdere spelers. Iedereen doet mee met een code.</div>
+        </div>
+        <i data-lucide="arrow-right" class="mode-card__arrow"></i>
+      </button>
+
+      <button class="mode-card" id="btn-mode-match">
+        <div class="mode-card__icon"><i data-lucide="grid-2x2"></i></div>
+        <div class="mode-card__body">
+          <div class="mode-card__name">Matchspel</div>
+          <div class="mode-card__desc">Koppel begrippen aan hun definities zo snel mogelijk. Oefen herkenning.</div>
+        </div>
+        <i data-lucide="arrow-right" class="mode-card__arrow"></i>
+      </button>` : "";
 
 	return `
     <div class="study-header">
@@ -13,7 +44,7 @@ export function renderStudyModePick(): string {
     </div>
 
     <div class="mode-pick">
-      <h2 class="mode-pick__title">Hoe wil je leren?</h2>
+      <h2 class="mode-pick__title">Leren</h2>
 
       <button class="mode-card" id="btn-mode-flashcard">
         <div class="mode-card__icon"><i data-lucide="layers"></i></div>
@@ -41,11 +72,17 @@ export function renderStudyModePick(): string {
         </div>
         <i data-lucide="arrow-right" class="mode-card__arrow"></i>
       </button>
+      ${speelHtml}
     </div>
   `;
 }
 
-export function bindStudyModePickEvents(render: () => void): void {
+export function bindStudyModePickEvents(
+	render: () => void,
+	startDuel: (id: string) => void,
+	startQuiz: (id: string) => void,
+	startMatch: (id: string) => void,
+): void {
 	document.getElementById("btn-mode-back")?.addEventListener("click", () => {
 		state.view = "home";
 		render();
@@ -71,4 +108,11 @@ export function bindStudyModePickEvents(render: () => void): void {
 		state.view = "study";
 		render();
 	});
+
+	if (state.activeDeckId) {
+		const deckId = state.activeDeckId;
+		document.getElementById("btn-mode-duel")?.addEventListener("click", () => startDuel(deckId));
+		document.getElementById("btn-mode-quiz")?.addEventListener("click", () => startQuiz(deckId));
+		document.getElementById("btn-mode-match")?.addEventListener("click", () => startMatch(deckId));
+	}
 }

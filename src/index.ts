@@ -43,7 +43,7 @@ function render(): void {
 		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); }, handleStartQuiz, handleStartMatch, handleGoToDiscover);
 	} else if (state.view === "study-mode-pick") {
 		app.innerHTML = renderStudyModePick();
-		bindStudyModePickEvents(render);
+		bindStudyModePickEvents(render, handleStartDuel, handleStartQuiz, handleStartMatch);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
 		if (state.studyMode === "type-answer") {
