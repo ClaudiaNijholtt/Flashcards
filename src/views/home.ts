@@ -2,7 +2,7 @@ import { state } from "../state";
 import { esc, formatDate, showToast, shuffle } from "../utils/helpers";
 import { saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
-import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode } from "../services/decks";
+import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode, setDeckPublic } from "../services/decks";
 import { generateFlashcards } from "../services/ai";
 import { DECK_COLORS } from "../types";
 import type { Deck } from "../types";
@@ -40,6 +40,10 @@ function deckMoreHtml(deck: Deck): string {
         <button class="deck-more__item" data-merge="${id}"><i data-lucide="git-merge"></i> Samenvoegen</button>
         ${canUnmerge ? `<button class="deck-more__item" data-unmerge="${id}"><i data-lucide="unlink"></i> Loskoppelen</button>` : ""}
         <button class="deck-more__item" data-share="${id}"><i data-lucide="share-2"></i> Delen</button>
+        <button class="deck-more__item" data-toggle-public="${id}" data-is-public="${deck.isPublic ? '1' : '0'}">
+          <i data-lucide="${deck.isPublic ? 'eye-off' : 'eye'}"></i>
+          ${deck.isPublic ? 'Privé maken' : 'Publiek maken'}
+        </button>
         <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
         <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
         <button class="deck-more__item deck-more__item--danger" data-delete="${id}"><i data-lucide="trash-2"></i> Verwijderen</button>
@@ -175,6 +179,9 @@ export function renderHome(): string {
         </div>
 
         <div class="add-section">
+          <button class="btn" id="btn-discover" style="width:100%;justify-content:center;margin-bottom:0.5rem">
+            <i data-lucide="compass"></i> Ontdekken
+          </button>
           <button class="btn" id="btn-open-mix-modal" style="width:100%;justify-content:center;margin-bottom:0.5rem">
             <i data-lucide="shuffle"></i> Decks mixen
           </button>
@@ -495,6 +502,7 @@ export function bindHomeEvents(
 	editDeck: (id: string) => void,
 	startDueStudy: (id: string) => void,
 	startQuiz: (deckId: string) => void,
+	goToDiscover: () => void,
 ): void {
 	document.getElementById("btn-theme")?.addEventListener("click", () => {
 		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -509,6 +517,8 @@ export function bindHomeEvents(
 	});
 
 	document.getElementById("btn-profile")?.addEventListener("click", goToProfile);
+
+	document.getElementById("btn-discover")?.addEventListener("click", goToDiscover);
 
 	// Tag filter chips
 	document.getElementById("tag-filter")?.addEventListener("click", (e) => {
@@ -536,7 +546,7 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-merge]") || t.closest("[data-unmerge]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-merge]") || t.closest("[data-unmerge]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest("[data-toggle-public]") || t.closest(".deck-more")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
@@ -605,7 +615,27 @@ export function bindHomeEvents(
 				}
 			});
 		});
+		bindTogglePublicButtons();
 		bindMoreButtons();
+	}
+
+	function bindTogglePublicButtons(): void {
+		document.querySelectorAll<HTMLElement>("[data-toggle-public]").forEach((btn) => {
+			btn.addEventListener("click", async (e) => {
+				e.stopPropagation();
+				const id = btn.dataset.togglePublic!;
+				const isPublic = btn.dataset.isPublic === "1";
+				try {
+					await setDeckPublic(id, !isPublic);
+					const deck = state.decks.find((d) => d.id === id);
+					if (deck) deck.isPublic = !isPublic;
+					showToast(isPublic ? "Deck is nu privé" : "Deck is nu publiek zichtbaar");
+					render();
+				} catch (err) {
+					showToast(err instanceof Error ? err.message : "Opslaan mislukt", true);
+				}
+			});
+		});
 	}
 
 	function bindMoreButtons(): void {
@@ -725,7 +755,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-toggle-public]") || t.closest(".deck-more")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -842,6 +872,7 @@ export function bindHomeEvents(
 	});
 
 	// More menu: initial render binding
+	bindTogglePublicButtons();
 	bindMoreButtons();
 
 	// Outside click closes all open menus (capture so it fires before item handlers)
