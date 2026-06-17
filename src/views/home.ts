@@ -36,6 +36,7 @@ function deckMoreHtml(deck: Deck): string {
         <button class="deck-more__item" data-stats="${id}"><i data-lucide="bar-chart-2"></i> Statistieken</button>
         <button class="deck-more__item" data-duel="${id}"><i data-lucide="swords"></i> Duel starten</button>
         <button class="deck-more__item" data-quiz="${id}"><i data-lucide="layout-grid"></i> Quiz starten</button>
+        <button class="deck-more__item" data-match="${id}"><i data-lucide="grid-2x2"></i> Matchspel</button>
         <button class="deck-more__item" data-split="${id}"><i data-lucide="scissors"></i> Splitsen</button>
         <button class="deck-more__item" data-merge="${id}"><i data-lucide="git-merge"></i> Samenvoegen</button>
         ${canUnmerge ? `<button class="deck-more__item" data-unmerge="${id}"><i data-lucide="unlink"></i> Loskoppelen</button>` : ""}
@@ -495,6 +496,7 @@ export function bindHomeEvents(
 	editDeck: (id: string) => void,
 	startDueStudy: (id: string) => void,
 	startQuiz: (deckId: string) => void,
+	startMatch: (deckId: string) => void,
 ): void {
 	document.getElementById("btn-theme")?.addEventListener("click", () => {
 		const isDark = document.documentElement.getAttribute("data-theme") === "dark";
@@ -527,8 +529,8 @@ export function bindHomeEvents(
 		list.innerHTML = visible.length > 0
 			? visible.map(deckCardHtml).join("")
 			: `<div class="home-empty"><p>Geen decks gevonden${state.deckTagFilter ? ` voor tag "<strong>${esc(state.deckTagFilter)}</strong>"` : state.deckSearch ? ` voor "<strong>${esc(state.deckSearch)}</strong>"` : ""}.</p></div>`;
-		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Scissors, GitMerge, Unlink, Shuffle }) =>
-			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Scissors, GitMerge, Unlink, Shuffle } }));
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Grid2x2, Scissors, GitMerge, Unlink, Shuffle }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Grid2x2, Scissors, GitMerge, Unlink, Shuffle } }));
 		bindDeckCardEvents();
 	});
 
@@ -536,7 +538,7 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-merge]") || t.closest("[data-unmerge]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-match]") || t.closest("[data-split]") || t.closest("[data-merge]") || t.closest("[data-unmerge]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
@@ -554,6 +556,9 @@ export function bindHomeEvents(
 		});
 		document.querySelectorAll<HTMLElement>("[data-quiz]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startQuiz(btn.dataset.quiz!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-match]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); startMatch(btn.dataset.match!); });
 		});
 		document.querySelectorAll<HTMLElement>("[data-split]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); openSplitModal(btn.dataset.split!); });
@@ -725,7 +730,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-match]") || t.closest("[data-split]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -801,6 +806,13 @@ export function bindHomeEvents(
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
 			startQuiz(btn.dataset.quiz!);
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>("[data-match]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			startMatch(btn.dataset.match!);
 		});
 	});
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented here.
 
+## [1.26.0] - 2026-06-17
+
+### Added
+
+- **Matchspel**: klik op kaarten om vraag-antwoord-paren te matchen; timer en foutenteller; beschikbaar via ⋯-menu per deck (minimaal 2 kaarten vereist); tot 6 kaarten per ronde
+
+---
+
 ## [1.25.0] - 2026-06-17
 
 ### Added
