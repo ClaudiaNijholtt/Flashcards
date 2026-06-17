@@ -53,7 +53,16 @@ export function bindDoneEvents(render: () => void): void {
 	});
 
 	document.getElementById("btn-restart")?.addEventListener("click", () => {
-		if (state.activeDeckId) startStudy(state.activeDeckId, render);
+		if (state.activeDeckId) {
+			startStudy(state.activeDeckId, render);
+		} else if (state.mixStudyName && state.studyCards) {
+			const cards = shuffle([...state.studyCards]);
+			state.cardIndex = 0; state.flipped = false; state.correct = 0; state.wrong = 0;
+			state.missed = []; state.cardQualities = {}; state.studyStartTime = 0; state.lastCardSnapshot = null;
+			state.studyCards = cards;
+			state.view = "study-mode-pick";
+			render();
+		}
 	});
 
 	document.getElementById("btn-home")?.addEventListener("click", () => {

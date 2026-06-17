@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented here.
 
+## [1.24.0] - 2026-06-17
+
+### Added
+
+- **Decks mixen**: knop "Decks mixen" in de zijbalk opent een modal met zoekbalk en tag-chips; selecteer meerdere decks en start een studeersessie met alle kaarten door elkaar geschud
+- **Deck splitsen**: via ⋯-menu een deck verdelen in N gelijke delen; live preview toont de kaartverdeling (bijv. 11 + 11)
+- **Deck samenvoegen**: via ⋯-menu een deck samenvoegen met andere decks; zoekbalk en deckkaarten met geselecteerde staat; originele decks worden opgeslagen als metadata voor loskoppelen
+- **Deck loskoppelen**: samengevoegde decks kunnen via ⋯-menu → "Loskoppelen" worden opgesplitst in de originele decks
+
+### Technical
+
+- `mergedFrom` metadata opgeslagen als JSONB in Supabase (`merged_from` kolom); vereist SQL-migratie: `ALTER TABLE decks ADD COLUMN IF NOT EXISTS merged_from JSONB;`
+
+---
+
+## [1.23.0] - 2026-06-17
+
+### Fixed
+
+- Dark mode: achtergrond, surfaces, borders en muted tekst hebben nu een subtiele blauwe/slate ondertoon (`#181a22` basis) i.p.v. neutraal grijs
+- Dark mode: primary knoppen, hover-kleuren en focus-ring afgestemd op de nieuwe achtergrondtint
+- Dark mode: "Wist ik niet", "Twijfel" en "Wist ik het" knoppen hadden hardcoded lichte achtergronden; nu donkere varianten in dark mode
+- Dark mode: meerkeuze-antwoordtekst was zwart door browser-default op `<button>`; `color: $text` toegevoegd aan `.duel-option`
+- Dark mode: mode-kaarten (Flashcards / Meerkeuze) waren te donker en kleurden samen met de pagina-achtergrond; nu `color: $text`, lichtere achtergrond en border in dark mode
+
+---
+
+## [1.22.0] - 2026-06-17
+
+### Fixed
+
+- Dark mode: "Flashcards" en "Meerkeuze" keuzekaarten hadden zwarte titeltekst; `color: $text` toegevoegd aan `.mode-card`
+- Dark mode: rating-knoppen ("Wist ik niet" / "Twijfel" / "Wist ik het") te breed — `flex: 1` verwijderd, knoppen zijn nu inhoudsbreedte en gecentreerd
+
+---
+
 ## [1.21.0] - 2026-06-16
 
 ### Added

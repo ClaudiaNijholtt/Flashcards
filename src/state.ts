@@ -4,6 +4,7 @@ import { loadApiKey, loadDecks, loadUserTags } from "./utils/storage";
 export const state: AppState = {
 	view: "home",
 	studyMode: "flashcard",
+	mixStudyName: null,
 	decks: [],
 	activeDeckId: null,
 	editDeckId: null,

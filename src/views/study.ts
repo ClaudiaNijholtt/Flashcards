@@ -37,6 +37,9 @@ function mcOptionClass(i: number): string {
 
 export function getActiveDeck(): Deck | undefined {
 	const deck = state.decks.find((d) => d.id === state.activeDeckId);
+	if (state.studyCards !== null && !deck && state.mixStudyName) {
+		return { id: "mix", name: state.mixStudyName, cards: state.studyCards, createdAt: new Date() };
+	}
 	if (!deck) return undefined;
 	if (state.studyCards !== null) return { ...deck, cards: state.studyCards };
 	return deck;
