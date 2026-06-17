@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Image } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks, saveUserTags } from "./utils/storage";
@@ -77,7 +77,7 @@ function render(): void {
 		bindQuizPlayerEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Image } });
 }
 
 function handleStartStats(deckId: string): void {

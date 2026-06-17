@@ -124,6 +124,7 @@ function renderStudyFlashcard(deck: Deck): string {
           <div class="face front">
             <div class="face__deck">${esc(deck.name)}</div>
             <div class="face__q">${esc(card.question)}</div>
+            ${card.imageUrl ? `<img class="card-study-image" src="${esc(card.imageUrl)}" alt="" loading="lazy">` : ""}
             <div class="face__hint">
               <span class="hint-desktop"><span class="kbd">Spatie</span> of klik om te draaien</span>
               <span class="hint-mobile">Tik om te draaien &nbsp;·&nbsp; veeg ← →</span>
@@ -132,6 +133,7 @@ function renderStudyFlashcard(deck: Deck): string {
           <div class="face back">
             <div class="face__deck">${esc(deck.name)}</div>
             <div class="face__a">${esc(card.answer)}</div>
+            ${card.imageUrl ? `<img class="card-study-image" src="${esc(card.imageUrl)}" alt="" loading="lazy">` : ""}
             <div class="face__hint">
               <span class="hint-desktop"><span class="kbd">1</span> niet &nbsp;<span class="kbd">2</span> twijfel &nbsp;<span class="kbd">3</span> geweten</span>
               <span class="hint-mobile">Veeg ← niet &nbsp;·&nbsp; → geweten &nbsp;·&nbsp; tik om terug</span>
@@ -194,6 +196,7 @@ function renderStudyMC(deck: Deck): string {
     <div class="duel-question-card">
       <div class="duel-question-card__deck">${esc(deck.name)}</div>
       <div class="duel-question-card__q">${esc(card.question)}</div>
+      ${card.imageUrl ? `<img class="card-study-image" src="${esc(card.imageUrl)}" alt="" loading="lazy">` : ""}
       ${!answered ? `<div class="duel-question-card__hint">Kies het juiste antwoord</div>` : ""}
     </div>
 
