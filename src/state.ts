@@ -29,4 +29,5 @@ export const state: AppState = {
 	user: null,
 	duel: null,
 	quiz: null,
+	matchDeckId: null,
 };

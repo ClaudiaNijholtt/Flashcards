@@ -128,9 +128,9 @@ export interface ActiveQuiz {
 }
 
 export interface AppState {
-  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player';
+  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player' | 'match-game';
   editDeckId: string | null;
-  studyMode: 'flashcard' | 'multiple-choice';
+  studyMode: 'flashcard' | 'multiple-choice' | 'type-answer';
   mixStudyName: string | null;
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
@@ -155,6 +155,7 @@ export interface AppState {
   user: AuthUser | null;
   duel: ActiveDuel | null;
   quiz: ActiveQuiz | null;
+  matchDeckId: string | null;
 }
 
 export interface AnthropicMessage {
