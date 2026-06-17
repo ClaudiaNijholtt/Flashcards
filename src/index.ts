@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Compass, Copy } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Keyboard, Grid2x2, Compass, Copy } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks, saveUserTags } from "./utils/storage";
@@ -7,7 +7,7 @@ import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { fetchStreak, fetchAllDueCounts } from "./services/srs";
 import { renderHome, bindHomeEvents } from "./views/home";
-import { renderStudy, bindStudyEvents, startStudy, startDueStudy, handleCardClick, markCard, undoLastCard, getActiveDeck, reshuffleStudy } from "./views/study";
+import { renderStudy, bindStudyEvents, bindStudyTypeAnswerEvents, startStudy, startDueStudy, handleCardClick, markCard, undoLastCard, getActiveDeck, reshuffleStudy } from "./views/study";
 import { renderStudyModePick, bindStudyModePickEvents } from "./views/study-mode-pick";
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
@@ -22,6 +22,7 @@ import { renderDeckEdit, bindDeckEditEvents } from "./views/deck-edit";
 import { renderQuizHost, bindQuizHostEvents, cleanupQuizHost } from "./views/game-host";
 import { renderQuizPlayer, bindQuizPlayerEvents, cleanupQuizPlayer } from "./views/game-player";
 import { renderDiscover, bindDiscoverEvents } from "./views/discover";
+import { renderMatchGame, bindMatchGameEvents } from "./views/match-game";
 import { createQuizSession, fetchQuizSession } from "./services/game";
 import { createDuelInDb, fetchDuelByCode, joinDuelInDb } from "./services/duels";
 import { fetchProfile } from "./services/profiles";
@@ -39,13 +40,17 @@ function render(): void {
 		app.innerHTML = renderGenerating();
 	} else if (state.view === "home") {
 		app.innerHTML = renderHome();
-		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); }, handleStartQuiz, handleGoToDiscover);
+		bindHomeEvents(render, (id) => startStudy(id, render), handleStartDuel, handleJoinDuel, handleStartStats, () => { state.view = "profile"; render(); }, (id) => { state.editDeckId = id; state.view = "deck-edit"; render(); }, (id) => { void startDueStudy(id, render); }, handleStartQuiz, handleStartMatch, handleGoToDiscover);
 	} else if (state.view === "study-mode-pick") {
 		app.innerHTML = renderStudyModePick();
 		bindStudyModePickEvents(render);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
-		bindStudyEvents(render);
+		if (state.studyMode === "type-answer") {
+			bindStudyTypeAnswerEvents(render);
+		} else {
+			bindStudyEvents(render);
+		}
 	} else if (state.view === "done") {
 		app.innerHTML = renderDone();
 		bindDoneEvents(render);
@@ -76,12 +81,15 @@ function render(): void {
 	} else if (state.view === "quiz-player") {
 		app.innerHTML = renderQuizPlayer();
 		bindQuizPlayerEvents(render);
+	} else if (state.view === "match-game") {
+		app.innerHTML = renderMatchGame();
+		bindMatchGameEvents(render);
 	} else if (state.view === "discover") {
 		app.innerHTML = renderDiscover();
 		bindDiscoverEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Compass, Copy } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Keyboard, Grid2x2, Compass, Copy } });
 }
 
 function handleGoToDiscover(): void {
@@ -147,6 +155,14 @@ async function handleStartQuiz(deckId: string): Promise<void> {
 	} catch (err) {
 		showToast(err instanceof Error ? err.message : "Quiz aanmaken mislukt", true);
 	}
+}
+
+function handleStartMatch(deckId: string): void {
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck || deck.cards.length < 2) { showToast("Dit deck heeft te weinig kaarten voor het matchspel (minimaal 2)", true); return; }
+	state.matchDeckId = deckId;
+	state.view = "match-game";
+	render();
 }
 
 async function handleJoinDuel(code: string): Promise<void> {

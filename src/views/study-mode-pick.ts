@@ -32,6 +32,15 @@ export function renderStudyModePick(): string {
         </div>
         <i data-lucide="arrow-right" class="mode-card__arrow"></i>
       </button>
+
+      <button class="mode-card" id="btn-mode-type">
+        <div class="mode-card__icon"><i data-lucide="keyboard"></i></div>
+        <div class="mode-card__body">
+          <div class="mode-card__name">Invullen</div>
+          <div class="mode-card__desc">Typ het antwoord zelf in. Test je actieve herinnering zonder hulp van opties.</div>
+        </div>
+        <i data-lucide="arrow-right" class="mode-card__arrow"></i>
+      </button>
     </div>
   `;
 }
@@ -51,6 +60,13 @@ export function bindStudyModePickEvents(render: () => void): void {
 
 	document.getElementById("btn-mode-mc")?.addEventListener("click", () => {
 		state.studyMode = "multiple-choice";
+		state.studyStartTime = Date.now();
+		state.view = "study";
+		render();
+	});
+
+	document.getElementById("btn-mode-type")?.addEventListener("click", () => {
+		state.studyMode = "type-answer";
 		state.studyStartTime = Date.now();
 		state.view = "study";
 		render();
