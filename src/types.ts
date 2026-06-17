@@ -2,6 +2,7 @@ export interface Flashcard {
   id: string;
   question: string;
   answer: string;
+  audioUrl?: string;
 }
 
 export interface UserTag {

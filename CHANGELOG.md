@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented here.
 
+## [1.29.0] - 2026-06-17
+
+### Added
+
+- **Audio op kaarten**: neem audio op via de microfoon of upload een audiobestand per kaart in de deck-editor; in studeermodus staat een afspeelknop per kaart
+- Audio wordt opgeslagen in Supabase Storage (bucket `card-audio`); vereist eenmalige setup in het Supabase-dashboard (zie `src/services/storage-media.ts`)
+
+---
+
 ## [1.24.0] - 2026-06-17
 
 ### Added

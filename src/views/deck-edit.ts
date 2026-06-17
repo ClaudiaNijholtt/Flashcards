@@ -5,6 +5,7 @@ import { saveTagLibrary } from "../services/profiles";
 import { saveUserTags } from "../utils/storage";
 import { DECK_COLORS } from "../types";
 import type { Flashcard, UserTag } from "../types";
+import { uploadCardAudio, deleteCardAudio } from "../services/storage-media";
 
 let _editingTags: string[] = [];
 let _newTagColor: string = DECK_COLORS[0].hex;
@@ -57,6 +58,18 @@ export function renderDeckEdit(): string {
 			<div class="card-edit-fields">
 				<textarea class="card-edit-question" rows="3" placeholder="Vraag" aria-label="Vraag ${i + 1}">${esc(card.question)}</textarea>
 				<textarea class="card-edit-answer" rows="3" placeholder="Antwoord" aria-label="Antwoord ${i + 1}">${esc(card.answer)}</textarea>
+				<div class="card-audio-controls" data-card-id="${card.id}">
+					${card.audioUrl
+						? `<audio class="card-audio-player" controls src="${esc(card.audioUrl)}"></audio>
+						   <button class="btn-icon btn-icon--danger card-audio-remove" data-card-id="${card.id}" title="Verwijderen"><i data-lucide="trash-2"></i></button>`
+						: `<button class="btn card-audio-record-btn" data-card-id="${card.id}"><i data-lucide="mic"></i> Opnemen</button>
+						   <span class="card-audio-or">of</span>
+						   <label class="btn card-audio-upload-label">
+						     <i data-lucide="upload"></i> Uploaden
+						     <input type="file" class="card-audio-file-input" data-card-id="${card.id}" accept="audio/*" style="display:none">
+						   </label>`
+					}
+				</div>
 			</div>
 			<button class="btn-icon card-edit-row__delete" data-delete-card title="Kaart verwijderen" aria-label="Kaart verwijderen">
 				<i data-lucide="trash-2"></i>
@@ -212,6 +225,82 @@ export function bindDeckEditEvents(render: () => void): void {
 		row.querySelector("textarea")?.focus();
 	});
 
+	// ── Audio controls ────────────────────────────────────────────────────────
+
+	document.querySelectorAll<HTMLElement>(".card-audio-record-btn").forEach(btn => {
+		let mediaRecorder: MediaRecorder | null = null;
+		let chunks: Blob[] = [];
+		let recording = false;
+		btn.addEventListener("click", async () => {
+			if (!recording) {
+				try {
+					const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+					chunks = [];
+					mediaRecorder = new MediaRecorder(stream);
+					mediaRecorder.ondataavailable = e => chunks.push(e.data);
+					mediaRecorder.onstop = async () => {
+						stream.getTracks().forEach(t => t.stop());
+						const blob = new Blob(chunks, { type: "audio/webm" });
+						if (!state.user) return;
+						const cardId = btn.dataset.cardId!;
+						try {
+							const url = await uploadCardAudio(blob, state.user.id, cardId, "webm");
+							const deck = state.decks.find(d => d.id === state.editDeckId);
+							if (deck) {
+								const card = deck.cards.find(c => c.id === cardId);
+								if (card) { card.audioUrl = url; await updateDeckCards(deck.id, deck.cards); }
+							}
+							render();
+						} catch (err) { showToast(err instanceof Error ? err.message : "Upload mislukt", true); }
+					};
+					mediaRecorder.start();
+					recording = true;
+					btn.innerHTML = '<i data-lucide="square"></i> Stop opname';
+					btn.classList.add("btn--recording");
+					import("lucide").then(({ createIcons, Square }) => createIcons({ icons: { Square } }));
+				} catch { showToast("Microfoon niet beschikbaar", true); }
+			} else {
+				mediaRecorder?.stop();
+				recording = false;
+				btn.innerHTML = '<i data-lucide="mic"></i> Opnemen';
+				btn.classList.remove("btn--recording");
+			}
+		});
+	});
+
+	document.querySelectorAll<HTMLInputElement>(".card-audio-file-input").forEach(input => {
+		input.addEventListener("change", async () => {
+			const file = input.files?.[0];
+			if (!file || !state.user) return;
+			const cardId = input.dataset.cardId!;
+			const ext = file.name.split(".").pop() ?? "mp3";
+			try {
+				const url = await uploadCardAudio(file, state.user.id, cardId, ext);
+				const deck = state.decks.find(d => d.id === state.editDeckId);
+				if (deck) {
+					const card = deck.cards.find(c => c.id === cardId);
+					if (card) { card.audioUrl = url; await updateDeckCards(deck.id, deck.cards); }
+				}
+				render();
+			} catch (err) { showToast(err instanceof Error ? err.message : "Upload mislukt", true); }
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>(".card-audio-remove").forEach(btn => {
+		btn.addEventListener("click", async () => {
+			const cardId = btn.dataset.cardId!;
+			const deck = state.decks.find(d => d.id === state.editDeckId);
+			if (!deck) return;
+			const card = deck.cards.find(c => c.id === cardId);
+			if (card?.audioUrl) {
+				await deleteCardAudio(card.audioUrl);
+				card.audioUrl = undefined;
+				await updateDeckCards(deck.id, deck.cards);
+				render();
+			}
+		});
+	});
+
 	// ── Save ──────────────────────────────────────────────────────────────────
 
 	document.getElementById("deck-edit-save")?.addEventListener("click", async () => {
@@ -227,7 +316,9 @@ export function bindDeckEditEvents(render: () => void): void {
 		for (const row of rows) {
 			const question = (row.querySelector(".card-edit-question") as HTMLTextAreaElement | null)?.value.trim() ?? "";
 			const answer = (row.querySelector(".card-edit-answer") as HTMLTextAreaElement | null)?.value.trim() ?? "";
-			cards.push({ id: row.dataset.cardId ?? crypto.randomUUID(), question, answer });
+			const cid = row.dataset.cardId ?? crypto.randomUUID();
+				const existingCard = deck.cards.find(c => c.id === cid);
+				cards.push({ id: cid, question, answer, audioUrl: existingCard?.audioUrl });
 		}
 
 		deck.name = newName;
