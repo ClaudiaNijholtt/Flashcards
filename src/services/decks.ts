@@ -49,7 +49,7 @@ export async function insertDeck(deck: Deck): Promise<void> {
 		creator_username: deck.creatorUsername ?? null,
 		tags: deck.tags ?? [],
 		color: deck.color ?? "",
-		merged_from: deck.mergedFrom ?? null,
+		...(deck.mergedFrom ? { merged_from: deck.mergedFrom } : {}),
 	});
 	if (error) throw new Error(translateDbError(error, "Kon deck niet opslaan"));
 }

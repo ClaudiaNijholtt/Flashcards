@@ -11,6 +11,22 @@ All notable changes to this project will be documented here.
 
 ---
 
+## [1.26.0] - 2026-06-17
+
+### Added
+
+- **Matchspel**: klik op kaarten om vraag-antwoord-paren te matchen; timer en foutenteller; beschikbaar via ⋯-menu per deck (minimaal 2 kaarten vereist); tot 6 kaarten per ronde
+
+---
+
+## [1.25.0] - 2026-06-17
+
+### Added
+
+- **Invullen-modus**: derde studeermodus waarbij je het antwoord zelf intypt; antwoord wordt automatisch gecontroleerd (hoofdletterongevoelig); correct = kwaliteit 2, fout = kwaliteit 0 met het juiste antwoord getoond
+
+---
+
 ## [1.24.0] - 2026-06-17
 
 ### Added
