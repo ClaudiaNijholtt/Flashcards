@@ -1,5 +1,5 @@
 import { state } from "../state";
-import { esc, formatDate, showToast } from "../utils/helpers";
+import { esc, formatDate, showToast, shuffle } from "../utils/helpers";
 import { saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
 import { insertDeck, removeDeck, fetchDecks, fetchDeckPlayCounts, shareDeck, fetchDeckByShareCode } from "../services/decks";
@@ -9,6 +9,8 @@ import type { Deck } from "../types";
 
 let _outsideClickHandler: ((e: Event) => void) | null = null;
 let _escapeKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+let _splitDeckId: string | null = null;
+let _mergeDeckId: string | null = null;
 
 function getDeckColorHex(colorKey: string | undefined): string {
 	return DECK_COLORS.find((c) => c.key === colorKey)?.hex ?? "";
@@ -24,7 +26,9 @@ function filterDecks(): Deck[] {
 	});
 }
 
-function deckMoreHtml(id: string): string {
+function deckMoreHtml(deck: Deck): string {
+	const id = deck.id;
+	const canUnmerge = (deck.mergedFrom?.length ?? 0) > 0;
 	return `
     <div class="deck-more">
       <button class="btn-icon" data-more-btn="${id}" title="Meer opties" aria-label="Meer opties"><i data-lucide="ellipsis"></i></button>
@@ -32,6 +36,9 @@ function deckMoreHtml(id: string): string {
         <button class="deck-more__item" data-stats="${id}"><i data-lucide="bar-chart-2"></i> Statistieken</button>
         <button class="deck-more__item" data-duel="${id}"><i data-lucide="swords"></i> Duel starten</button>
         <button class="deck-more__item" data-quiz="${id}"><i data-lucide="layout-grid"></i> Quiz starten</button>
+        <button class="deck-more__item" data-split="${id}"><i data-lucide="scissors"></i> Splitsen</button>
+        <button class="deck-more__item" data-merge="${id}"><i data-lucide="git-merge"></i> Samenvoegen</button>
+        ${canUnmerge ? `<button class="deck-more__item" data-unmerge="${id}"><i data-lucide="unlink"></i> Loskoppelen</button>` : ""}
         <button class="deck-more__item" data-share="${id}"><i data-lucide="share-2"></i> Delen</button>
         <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
         <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
@@ -61,7 +68,7 @@ function deckCardHtml(deck: Deck): string {
           ${(state.deckDueCounts[deck.id] ?? 0) > 0 ? `<button class="btn deck-card__due" data-due="${deck.id}" title="${state.deckDueCounts[deck.id]} kaarten te leren vandaag"><i data-lucide="flame"></i> ${state.deckDueCounts[deck.id]}</button>` : ""}
           <button class="btn-primary deck-card__study" data-study="${deck.id}">Leren <i data-lucide="arrow-right"></i></button>
         </div>
-        ${deckMoreHtml(deck.id)}
+        ${deckMoreHtml(deck)}
       </div>
     </div>`;
 }
@@ -168,6 +175,9 @@ export function renderHome(): string {
         </div>
 
         <div class="add-section">
+          <button class="btn" id="btn-open-mix-modal" style="width:100%;justify-content:center;margin-bottom:0.5rem">
+            <i data-lucide="shuffle"></i> Decks mixen
+          </button>
           <button class="btn-primary btn-add-deck-trigger" id="btn-open-add-modal">
             <i data-lucide="plus"></i> Deck toevoegen
           </button>
@@ -182,6 +192,75 @@ export function renderHome(): string {
     <button class="fab" id="fab-add-deck" title="Deck toevoegen" aria-label="Deck toevoegen">
       <i data-lucide="plus"></i>
     </button>
+
+    <div class="modal-overlay hidden" id="split-deck-modal" role="dialog" aria-modal="true" aria-labelledby="split-modal-title">
+      <div class="modal-glass" style="max-width:380px">
+        <div class="modal-glass__header">
+          <span class="modal-glass__title" id="split-modal-title">Deck splitsen</span>
+          <button class="btn-icon modal-glass__close" id="split-modal-close" title="Sluiten" aria-label="Sluiten"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-glass__body">
+          <p id="split-deck-info" class="profile-hint" style="margin-bottom:1.25rem"></p>
+          <label for="split-parts-input" style="display:block;font-size:14px;font-weight:600;margin-bottom:0.5rem">Aantal delen</label>
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem">
+            <input type="number" id="split-parts-input" min="2" max="20" value="2"
+              style="width:72px;padding:0.5rem;border:1.5px solid var(--border-mid);border-radius:8px;font-size:16px;background:var(--surface-alt);color:var(--text);text-align:center" />
+            <span id="split-preview" style="font-size:13px;color:var(--text-muted)"></span>
+          </div>
+          <button class="btn-primary" id="btn-confirm-split" style="width:100%;justify-content:center">
+            Splitsen <i data-lucide="scissors"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="mix-deck-modal" role="dialog" aria-modal="true" aria-labelledby="mix-modal-title">
+      <div class="modal-glass" style="max-width:480px">
+        <div class="modal-glass__header">
+          <span class="modal-glass__title" id="mix-modal-title">Decks mixen</span>
+          <button class="btn-icon modal-glass__close" id="mix-modal-close" title="Sluiten" aria-label="Sluiten"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-glass__body">
+          ${state.userTags.length > 0 ? `
+          <div class="mix-tag-row" id="mix-tag-row">
+            ${state.userTags.map((t) => `<button class="tag-chip tag-chip--colored" data-mix-tag="${esc(t.name)}" style="--tag-color:${t.color};--tag-color-bg:${t.color}1a;">${esc(t.name)}</button>`).join("")}
+          </div>` : ""}
+          <div class="merge-search-wrap">
+            <i data-lucide="search" class="merge-search__icon"></i>
+            <input type="search" id="mix-search" placeholder="Zoeken…" autocomplete="off" />
+          </div>
+          <div id="mix-deck-list" class="merge-deck-list"></div>
+          <p id="mix-preview" style="font-size:13px;color:var(--text-muted);margin-top:0.75rem;margin-bottom:1.1rem"></p>
+          <button class="btn-primary" id="btn-confirm-mix" style="width:100%;justify-content:center">
+            Starten <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay hidden" id="merge-deck-modal" role="dialog" aria-modal="true" aria-labelledby="merge-modal-title">
+      <div class="modal-glass" style="max-width:480px">
+        <div class="modal-glass__header">
+          <span class="modal-glass__title" id="merge-modal-title">Decks samenvoegen</span>
+          <button class="btn-icon modal-glass__close" id="merge-modal-close" title="Sluiten" aria-label="Sluiten"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-glass__body">
+          <label for="merge-name-input" style="display:block;font-size:14px;font-weight:600;margin-bottom:0.4rem">Naam van het samengevoegde deck</label>
+          <input type="text" id="merge-name-input" maxlength="80" autocomplete="off"
+            style="width:100%;padding:0.55rem 0.75rem;border:1.5px solid var(--border-mid);border-radius:8px;font-size:14px;background:var(--surface-alt);color:var(--text);margin-bottom:1.25rem;box-sizing:border-box" />
+          <label style="display:block;font-size:14px;font-weight:600;margin-bottom:0.5rem">Selecteer decks om samen te voegen</label>
+          <div class="merge-search-wrap">
+            <i data-lucide="search" class="merge-search__icon"></i>
+            <input type="search" id="merge-search" placeholder="Zoeken…" autocomplete="off" />
+          </div>
+          <div id="merge-deck-list" class="merge-deck-list"></div>
+          <p id="merge-preview" style="font-size:13px;color:var(--text-muted);margin-top:0.75rem;margin-bottom:1.1rem"></p>
+          <button class="btn-primary" id="btn-confirm-merge" style="width:100%;justify-content:center">
+            Samenvoegen <i data-lucide="git-merge"></i>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="modal-overlay hidden" id="add-deck-modal" role="dialog" aria-modal="true" aria-labelledby="add-deck-modal-title">
       <div class="modal-glass">
@@ -226,6 +305,186 @@ function closeAddDeckModal(): void {
 	document.body.style.overflow = "";
 }
 
+function openSplitModal(deckId: string): void {
+	_splitDeckId = deckId;
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck) return;
+	const info = document.getElementById("split-deck-info");
+	const input = document.getElementById("split-parts-input") as HTMLInputElement;
+	const max = Math.min(deck.cards.length, 20);
+	if (info) info.textContent = `"${deck.name}" heeft ${deck.cards.length} kaarten. Kies in hoeveel gelijke delen je het wilt splitsen.`;
+	if (input) { input.max = String(max); input.value = "2"; }
+	updateSplitPreview(deck.cards.length, 2);
+	document.getElementById("split-deck-modal")?.classList.remove("hidden");
+	document.body.style.overflow = "hidden";
+}
+
+function closeSplitModal(): void {
+	document.getElementById("split-deck-modal")?.classList.add("hidden");
+	document.body.style.overflow = "";
+	_splitDeckId = null;
+}
+
+function mergeDeckCardHtml(deck: Deck): string {
+	const hex = getDeckColorHex(deck.color);
+	const colorDot = hex ? `<span class="deck-color-dot" style="background:${hex}"></span>` : "";
+	const iconStyle = hex ? ` style="color:${hex}"` : "";
+	const tagsHtml = (deck.tags ?? []).length > 0
+		? `<div class="deck-card__tags" style="margin-bottom:3px">${(deck.tags ?? []).map((name) => {
+			const tagHex = state.userTags.find((t) => t.name === name)?.color ?? "#6b7280";
+			return `<span class="deck-tag-pill" style="--tag-color:${tagHex};--tag-bg:${tagHex}1a;">${esc(name)}</span>`;
+		}).join("")}</div>` : "";
+	return `
+    <div class="merge-deck-card" data-merge-id="${deck.id}">
+      <div class="merge-deck-card__icon"${iconStyle}><i data-lucide="book-open"></i></div>
+      <div class="merge-deck-card__info">
+        ${tagsHtml}
+        <div class="merge-deck-card__name">${colorDot}${esc(deck.name)}</div>
+        <div class="merge-deck-card__meta">${deck.cards.length} kaarten · ${formatDate(deck.createdAt)}</div>
+      </div>
+      <div class="merge-deck-card__check"><i data-lucide="check"></i></div>
+    </div>`;
+}
+
+function renderMergeDeckList(baseDeckId: string, query: string): void {
+	const listEl = document.getElementById("merge-deck-list");
+	if (!listEl) return;
+	const q = query.toLowerCase();
+	const others = state.decks.filter((d) => d.id !== baseDeckId && (!q || d.name.toLowerCase().includes(q)));
+	const selectedIds = new Set(
+		Array.from(document.querySelectorAll<HTMLElement>(".merge-deck-card--selected")).map((el) => el.dataset.mergeId!),
+	);
+	if (others.length === 0) {
+		listEl.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:0.5rem 0">${q ? "Geen decks gevonden." : "Geen andere decks beschikbaar."}</p>`;
+		return;
+	}
+	listEl.innerHTML = others.map((d) => mergeDeckCardHtml(d)).join("");
+	listEl.querySelectorAll<HTMLElement>(".merge-deck-card").forEach((card) => {
+		if (selectedIds.has(card.dataset.mergeId!)) card.classList.add("merge-deck-card--selected");
+		card.addEventListener("click", () => {
+			card.classList.toggle("merge-deck-card--selected");
+			updateMergePreview(baseDeckId);
+		});
+	});
+	import("lucide").then(({ createIcons, BookOpen, Check }) => createIcons({ icons: { BookOpen, Check } }));
+}
+
+function openMergeModal(deckId: string): void {
+	_mergeDeckId = deckId;
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck) return;
+	const nameInput = document.getElementById("merge-name-input") as HTMLInputElement | null;
+	if (nameInput) nameInput.value = deck.name;
+	const searchInput = document.getElementById("merge-search") as HTMLInputElement | null;
+	if (searchInput) searchInput.value = "";
+	renderMergeDeckList(deckId, "");
+	updateMergePreview(deckId);
+	document.getElementById("merge-deck-modal")?.classList.remove("hidden");
+	document.body.style.overflow = "hidden";
+}
+
+function closeMergeModal(): void {
+	document.getElementById("merge-deck-modal")?.classList.add("hidden");
+	document.body.style.overflow = "";
+	_mergeDeckId = null;
+}
+
+function updateMergePreview(baseDeckId: string): void {
+	const preview = document.getElementById("merge-preview");
+	if (!preview) return;
+	const base = state.decks.find((d) => d.id === baseDeckId);
+	if (!base) return;
+	const selectedCards = Array.from(document.querySelectorAll<HTMLElement>(".merge-deck-card--selected"))
+		.map((el) => state.decks.find((d) => d.id === el.dataset.mergeId))
+		.filter(Boolean) as typeof state.decks;
+	const total = base.cards.length + selectedCards.reduce((s, d) => s + d.cards.length, 0);
+	if (selectedCards.length === 0) {
+		preview.textContent = "Selecteer minimaal één deck om samen te voegen.";
+	} else {
+		preview.textContent = `Resultaat: ${total} kaarten (${base.cards.length} + ${selectedCards.map((d) => d.cards.length).join(" + ")})`;
+	}
+}
+
+function openMixModal(): void {
+	const searchInput = document.getElementById("mix-search") as HTMLInputElement | null;
+	if (searchInput) searchInput.value = "";
+	renderMixDeckList("");
+	updateMixPreview();
+	document.getElementById("mix-deck-modal")?.classList.remove("hidden");
+	document.body.style.overflow = "hidden";
+}
+
+function closeMixModal(): void {
+	document.getElementById("mix-deck-modal")?.classList.add("hidden");
+	document.body.style.overflow = "";
+}
+
+function renderMixDeckList(query: string): void {
+	const listEl = document.getElementById("mix-deck-list");
+	if (!listEl) return;
+	const q = query.toLowerCase();
+	const decks = state.decks.filter((d) => !q || d.name.toLowerCase().includes(q));
+	const selectedIds = new Set(
+		Array.from(document.querySelectorAll<HTMLElement>(".mix-deck-card--selected")).map((el) => el.dataset.mixId!),
+	);
+	if (decks.length === 0) {
+		listEl.innerHTML = `<p style="font-size:13px;color:var(--text-muted);padding:0.5rem 0">Geen decks gevonden.</p>`;
+		return;
+	}
+	listEl.innerHTML = decks.map((d) => {
+		const hex = getDeckColorHex(d.color);
+		const colorDot = hex ? `<span class="deck-color-dot" style="background:${hex}"></span>` : "";
+		const iconStyle = hex ? ` style="color:${hex}"` : "";
+		const tagsHtml = (d.tags ?? []).length > 0
+			? `<div class="deck-card__tags" style="margin-bottom:3px">${(d.tags ?? []).map((name) => {
+				const tagHex = state.userTags.find((t) => t.name === name)?.color ?? "#6b7280";
+				return `<span class="deck-tag-pill" style="--tag-color:${tagHex};--tag-bg:${tagHex}1a;">${esc(name)}</span>`;
+			}).join("")}</div>` : "";
+		return `
+      <div class="merge-deck-card${selectedIds.has(d.id) ? " merge-deck-card--selected mix-deck-card--selected" : ""}" data-mix-id="${d.id}">
+        <div class="merge-deck-card__icon"${iconStyle}><i data-lucide="book-open"></i></div>
+        <div class="merge-deck-card__info">
+          ${tagsHtml}
+          <div class="merge-deck-card__name">${colorDot}${esc(d.name)}</div>
+          <div class="merge-deck-card__meta">${d.cards.length} kaarten · ${formatDate(d.createdAt)}</div>
+        </div>
+        <div class="merge-deck-card__check"><i data-lucide="check"></i></div>
+      </div>`;
+	}).join("");
+	listEl.querySelectorAll<HTMLElement>("[data-mix-id]").forEach((card) => {
+		card.addEventListener("click", () => {
+			card.classList.toggle("merge-deck-card--selected");
+			card.classList.toggle("mix-deck-card--selected");
+			updateMixPreview();
+		});
+	});
+	import("lucide").then(({ createIcons, BookOpen, Check }) => createIcons({ icons: { BookOpen, Check } }));
+}
+
+function updateMixPreview(): void {
+	const preview = document.getElementById("mix-preview");
+	if (!preview) return;
+	const selected = Array.from(document.querySelectorAll<HTMLElement>(".mix-deck-card--selected"))
+		.map((el) => state.decks.find((d) => d.id === el.dataset.mixId))
+		.filter(Boolean) as typeof state.decks;
+	const total = selected.reduce((s, d) => s + d.cards.length, 0);
+	if (selected.length === 0) {
+		preview.textContent = "Selecteer minimaal één deck.";
+	} else {
+		preview.textContent = `${selected.length} deck${selected.length !== 1 ? "s" : ""} geselecteerd · ${total} kaarten`;
+	}
+}
+
+function updateSplitPreview(total: number, parts: number): void {
+	const preview = document.getElementById("split-preview");
+	if (!preview) return;
+	if (parts < 2 || parts > total) { preview.textContent = ""; return; }
+	const base = Math.floor(total / parts);
+	const remainder = total % parts;
+	const counts = Array.from({ length: parts }, (_, i) => base + (i < remainder ? 1 : 0));
+	preview.textContent = counts.join(" + ") + " kaarten";
+}
+
 export function bindHomeEvents(
 	render: () => void,
 	startStudy: (id: string) => void,
@@ -268,8 +527,8 @@ export function bindHomeEvents(
 		list.innerHTML = visible.length > 0
 			? visible.map(deckCardHtml).join("")
 			: `<div class="home-empty"><p>Geen decks gevonden${state.deckTagFilter ? ` voor tag "<strong>${esc(state.deckTagFilter)}</strong>"` : state.deckSearch ? ` voor "<strong>${esc(state.deckSearch)}</strong>"` : ""}.</p></div>`;
-		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid }) =>
-			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid } }));
+		import("lucide").then(({ createIcons, BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Scissors, GitMerge, Unlink, Shuffle }) =>
+			createIcons({ icons: { BookOpen, ArrowRight, BarChart2, Swords, Download, Trash2, Pencil, Ellipsis, Flame, User, Share2, LayoutGrid, Scissors, GitMerge, Unlink, Shuffle } }));
 		bindDeckCardEvents();
 	});
 
@@ -277,7 +536,7 @@ export function bindHomeEvents(
 		document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 			card.addEventListener("click", (e) => {
 				const t = e.target as HTMLElement;
-				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
+				if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-merge]") || t.closest("[data-unmerge]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest("[data-due]") || t.closest(".deck-more")) return;
 				startStudy(card.dataset.id!);
 			});
 		});
@@ -295,6 +554,15 @@ export function bindHomeEvents(
 		});
 		document.querySelectorAll<HTMLElement>("[data-quiz]").forEach((btn) => {
 			btn.addEventListener("click", (e) => { e.stopPropagation(); startQuiz(btn.dataset.quiz!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-split]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); openSplitModal(btn.dataset.split!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-merge]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); openMergeModal(btn.dataset.merge!); });
+		});
+		document.querySelectorAll<HTMLElement>("[data-unmerge]").forEach((btn) => {
+			btn.addEventListener("click", (e) => { e.stopPropagation(); void handleUnmerge(btn.dataset.unmerge!, render); });
 		});
 		document.querySelectorAll<HTMLElement>("[data-share]").forEach((btn) => {
 			btn.addEventListener("click", async (e) => {
@@ -376,8 +644,11 @@ export function bindHomeEvents(
 
 	if (_escapeKeyHandler) document.removeEventListener("keydown", _escapeKeyHandler);
 	_escapeKeyHandler = (e: KeyboardEvent) => {
-		if (e.key === "Escape" && !document.getElementById("add-deck-modal")?.classList.contains("hidden")) {
-			closeAddDeckModal();
+		if (e.key === "Escape") {
+			if (!document.getElementById("add-deck-modal")?.classList.contains("hidden")) closeAddDeckModal();
+			if (!document.getElementById("split-deck-modal")?.classList.contains("hidden")) closeSplitModal();
+			if (!document.getElementById("merge-deck-modal")?.classList.contains("hidden")) closeMergeModal();
+			if (!document.getElementById("mix-deck-modal")?.classList.contains("hidden")) closeMixModal();
 		}
 	};
 	document.addEventListener("keydown", _escapeKeyHandler);
@@ -454,7 +725,7 @@ export function bindHomeEvents(
 	document.querySelectorAll<HTMLElement>(".deck-card").forEach((card) => {
 		card.addEventListener("click", (e) => {
 			const t = e.target as HTMLElement;
-			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
+			if (t.closest("[data-delete]") || t.closest("[data-duel]") || t.closest("[data-quiz]") || t.closest("[data-split]") || t.closest("[data-export]") || t.closest("[data-study]") || t.closest("[data-stats]") || t.closest("[data-edit]") || t.closest(".deck-more")) return;
 			startStudy(card.dataset.id!);
 		});
 	});
@@ -533,6 +804,27 @@ export function bindHomeEvents(
 		});
 	});
 
+	document.querySelectorAll<HTMLElement>("[data-split]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			openSplitModal(btn.dataset.split!);
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>("[data-merge]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			openMergeModal(btn.dataset.merge!);
+		});
+	});
+
+	document.querySelectorAll<HTMLElement>("[data-unmerge]").forEach((btn) => {
+		btn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			void handleUnmerge(btn.dataset.unmerge!, render);
+		});
+	});
+
 	document.querySelectorAll<HTMLElement>("[data-export]").forEach((btn) => {
 		btn.addEventListener("click", (e) => {
 			e.stopPropagation();
@@ -603,6 +895,163 @@ export function bindHomeEvents(
 		}
 	});
 
+	// Merge deck modal
+	document.getElementById("merge-modal-close")?.addEventListener("click", closeMergeModal);
+	document.getElementById("merge-deck-modal")?.addEventListener("click", (e) => {
+		if ((e.target as HTMLElement).id === "merge-deck-modal") closeMergeModal();
+	});
+	const mergeSearchInput = document.getElementById("merge-search") as HTMLInputElement | null;
+	mergeSearchInput?.addEventListener("input", () => {
+		if (_mergeDeckId) renderMergeDeckList(_mergeDeckId, mergeSearchInput.value);
+	});
+	document.getElementById("btn-confirm-merge")?.addEventListener("click", async () => {
+		const base = _mergeDeckId ? state.decks.find((d) => d.id === _mergeDeckId) : null;
+		if (!base) return;
+		const nameInput = document.getElementById("merge-name-input") as HTMLInputElement | null;
+		const name = nameInput?.value.trim() ?? base.name;
+		if (!name) { showToast("Voer een naam in voor het samengevoegde deck", true); return; }
+		const selectedDecks = Array.from(document.querySelectorAll<HTMLElement>(".merge-deck-card--selected"))
+			.map((el) => state.decks.find((d) => d.id === el.dataset.mergeId))
+			.filter(Boolean) as typeof state.decks;
+		if (selectedDecks.length === 0) { showToast("Selecteer minimaal één deck om samen te voegen", true); return; }
+		const btn = document.getElementById("btn-confirm-merge") as HTMLButtonElement;
+		btn.disabled = true;
+		btn.textContent = "Samenvoegen…";
+		try {
+			const allCards = [
+				...base.cards,
+				...selectedDecks.flatMap((d) => d.cards),
+			].map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() }));
+			const merged: Deck = {
+				id: crypto.randomUUID(),
+				name,
+				cards: allCards,
+				createdAt: new Date(),
+				creatorUsername: state.user?.username ?? undefined,
+				tags: [],
+				color: base.color ?? "",
+				mergedFrom: [base, ...selectedDecks].map((d) => ({
+					name: d.name,
+					cards: d.cards.map((c) => ({ ...c })),
+					tags: d.tags ? [...d.tags] : [],
+					color: d.color ?? "",
+				})),
+			};
+			if (state.user) {
+				await insertDeck(merged);
+				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
+			} else {
+				state.decks.push(merged);
+				saveDecks(state.decks);
+			}
+			closeMergeModal();
+			showToast(`"${name}" aangemaakt met ${allCards.length} kaarten ✓`);
+			render();
+		} catch (err) {
+			showToast(err instanceof Error ? err.message : "Samenvoegen mislukt", true);
+			btn.disabled = false;
+			btn.innerHTML = "Samenvoegen <i data-lucide=\"git-merge\"></i>";
+		}
+	});
+
+	// Mix deck modal
+	document.getElementById("btn-open-mix-modal")?.addEventListener("click", openMixModal);
+	document.getElementById("mix-modal-close")?.addEventListener("click", closeMixModal);
+	document.getElementById("mix-deck-modal")?.addEventListener("click", (e) => {
+		if ((e.target as HTMLElement).id === "mix-deck-modal") closeMixModal();
+	});
+	const mixSearchInput = document.getElementById("mix-search") as HTMLInputElement | null;
+	mixSearchInput?.addEventListener("input", () => renderMixDeckList(mixSearchInput.value));
+	document.getElementById("mix-tag-row")?.addEventListener("click", (e) => {
+		const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-mix-tag]");
+		if (!btn) return;
+		const tag = btn.dataset.mixTag!;
+		const deckIds = state.decks.filter((d) => (d.tags ?? []).includes(tag)).map((d) => d.id);
+		document.querySelectorAll<HTMLElement>("[data-mix-id]").forEach((card) => {
+			if (deckIds.includes(card.dataset.mixId!)) {
+				card.classList.add("merge-deck-card--selected", "mix-deck-card--selected");
+			}
+		});
+		updateMixPreview();
+	});
+	document.getElementById("btn-confirm-mix")?.addEventListener("click", () => {
+		const selected = Array.from(document.querySelectorAll<HTMLElement>(".mix-deck-card--selected"))
+			.map((el) => state.decks.find((d) => d.id === el.dataset.mixId))
+			.filter(Boolean) as typeof state.decks;
+		if (selected.length === 0) { showToast("Selecteer minimaal één deck", true); return; }
+		const allCards = shuffle(selected.flatMap((d) => d.cards).map((c) => ({ ...c })));
+		const name = selected.length === 1
+			? selected[0].name
+			: `${selected.map((d) => d.name).slice(0, 2).join(" + ")}${selected.length > 2 ? ` +${selected.length - 2}` : ""}`;
+		state.mixStudyName = name;
+		state.activeDeckId = null;
+		state.studyCards = allCards;
+		state.cardIndex = 0; state.flipped = false; state.correct = 0; state.wrong = 0;
+		state.missed = []; state.cardQualities = {}; state.studyStartTime = 0; state.lastCardSnapshot = null;
+		state.view = "study-mode-pick";
+		closeMixModal();
+		render();
+	});
+
+	// Split deck modal
+	document.getElementById("split-modal-close")?.addEventListener("click", closeSplitModal);
+	document.getElementById("split-deck-modal")?.addEventListener("click", (e) => {
+		if ((e.target as HTMLElement).id === "split-deck-modal") closeSplitModal();
+	});
+	const splitInput = document.getElementById("split-parts-input") as HTMLInputElement | null;
+	splitInput?.addEventListener("input", () => {
+		const deck = _splitDeckId ? state.decks.find((d) => d.id === _splitDeckId) : null;
+		if (deck) updateSplitPreview(deck.cards.length, parseInt(splitInput.value) || 0);
+	});
+	document.getElementById("btn-confirm-split")?.addEventListener("click", async () => {
+		const deck = _splitDeckId ? state.decks.find((d) => d.id === _splitDeckId) : null;
+		if (!deck) return;
+		const parts = parseInt(splitInput?.value ?? "2");
+		if (isNaN(parts) || parts < 2 || parts > deck.cards.length) {
+			showToast("Kies een geldig aantal delen (minimaal 2, maximaal het aantal kaarten)", true);
+			return;
+		}
+		const btn = document.getElementById("btn-confirm-split") as HTMLButtonElement;
+		btn.disabled = true;
+		btn.textContent = "Splitsen…";
+		try {
+			const shuffled = [...deck.cards];
+			const base = Math.floor(shuffled.length / parts);
+			const remainder = shuffled.length % parts;
+			let offset = 0;
+			const newDecks: Deck[] = [];
+			for (let i = 0; i < parts; i++) {
+				const size = base + (i < remainder ? 1 : 0);
+				newDecks.push({
+					id: crypto.randomUUID(),
+					name: `${deck.name} (deel ${i + 1} van ${parts})`,
+					cards: shuffled.slice(offset, offset + size).map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() })),
+					createdAt: new Date(),
+					creatorUsername: state.user?.username ?? undefined,
+					tags: deck.tags ? [...deck.tags] : [],
+					color: deck.color ?? "",
+				});
+				offset += size;
+			}
+			if (state.user) {
+				for (const d of newDecks) await insertDeck(d);
+				state.decks = await fetchDecks();
+				state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
+			} else {
+				state.decks.push(...newDecks);
+				saveDecks(state.decks);
+			}
+			closeSplitModal();
+			showToast(`"${deck.name}" gesplitst in ${parts} delen ✓`);
+			render();
+		} catch (err) {
+			showToast(err instanceof Error ? err.message : "Splitsen mislukt", true);
+			btn.disabled = false;
+			btn.innerHTML = "Splitsen <i data-lucide=\"scissors\"></i>";
+		}
+	});
+
 	// Duel: join by code
 	const codeInput = document.getElementById("duel-code-home") as HTMLInputElement | null;
 	codeInput?.addEventListener("input", () => {
@@ -636,6 +1085,38 @@ function isValidDeckJson(data: unknown): data is { name: string; cards: { questi
 			typeof (c as Record<string, unknown>).question === "string" &&
 			typeof (c as Record<string, unknown>).answer === "string",
 	);
+}
+
+async function handleUnmerge(deckId: string, render: () => void): Promise<void> {
+	const deck = state.decks.find((d) => d.id === deckId);
+	if (!deck?.mergedFrom?.length) return;
+	const parts = deck.mergedFrom;
+	if (!confirm(`"${deck.name}" loskoppelen in ${parts.length} originele decks? Het samengevoegde deck wordt verwijderd.`)) return;
+	try {
+		const newDecks: Deck[] = parts.map((p) => ({
+			id: crypto.randomUUID(),
+			name: p.name,
+			cards: p.cards.map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() })),
+			createdAt: new Date(),
+			creatorUsername: state.user?.username ?? undefined,
+			tags: p.tags ? [...p.tags] : [],
+			color: p.color ?? "",
+		}));
+		if (state.user) {
+			for (const d of newDecks) await insertDeck(d);
+			await removeDeck(deckId);
+			state.decks = await fetchDecks();
+			state.deckPlayCounts = await fetchDeckPlayCounts(state.decks.map((d) => d.id));
+		} else {
+			state.decks = state.decks.filter((d) => d.id !== deckId);
+			state.decks.push(...newDecks);
+			saveDecks(state.decks);
+		}
+		showToast(`Losgekoppeld in ${parts.length} decks ✓`);
+		render();
+	} catch (err) {
+		showToast(err instanceof Error ? err.message : "Loskoppelen mislukt", true);
+	}
 }
 
 async function handleFiles(files: File[], render: () => void): Promise<void> {

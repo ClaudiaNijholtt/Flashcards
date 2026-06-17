@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { translateDbError } from "../utils/helpers";
-import type { Deck, Flashcard } from "../types";
+import type { Deck, Flashcard, MergedFromEntry } from "../types";
 
 export async function fetchDecks(): Promise<Deck[]> {
 	const { data, error } = await supabase
@@ -16,6 +16,7 @@ export async function fetchDecks(): Promise<Deck[]> {
 		creatorUsername: (row.creator_username as string | null) ?? undefined,
 		tags: (row.tags as string[] | null) ?? [],
 		color: (row.color as string | null) ?? "",
+		mergedFrom: (row.merged_from as MergedFromEntry[] | null) ?? undefined,
 	}));
 }
 
@@ -48,6 +49,7 @@ export async function insertDeck(deck: Deck): Promise<void> {
 		creator_username: deck.creatorUsername ?? null,
 		tags: deck.tags ?? [],
 		color: deck.color ?? "",
+		merged_from: deck.mergedFrom ?? null,
 	});
 	if (error) throw new Error(translateDbError(error, "Kon deck niet opslaan"));
 }

@@ -20,6 +20,13 @@ export const DECK_COLORS: { key: string; label: string; hex: string }[] = [
   { key: "teal",   label: "Teal",   hex: "#14b8a6" },
 ];
 
+export interface MergedFromEntry {
+  name: string;
+  cards: Flashcard[];
+  tags?: string[];
+  color?: string;
+}
+
 export interface Deck {
   id: string;
   name: string;
@@ -29,6 +36,7 @@ export interface Deck {
   playCount?: number;
   tags?: string[];
   color?: string;
+  mergedFrom?: MergedFromEntry[];
 }
 
 export interface AuthUser {
@@ -122,6 +130,7 @@ export interface AppState {
   view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player';
   editDeckId: string | null;
   studyMode: 'flashcard' | 'multiple-choice';
+  mixStudyName: string | null;
   decks: Deck[];
   deckPlayCounts: Record<string, number>;
   deckSearch: string;

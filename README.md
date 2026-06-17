@@ -11,6 +11,9 @@ AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcar
 - **Solo multiple choice** — kies per sessie tussen flashcards of MC met 4 opties
 - **Duel mode** — real-time competitie met een vriend via een 6-cijferige kamercode (anti-cheat MC)
 - **Kahoot-quiz** — multiplayer kennisquiz met timer en snelheidspunten (100–1000 per vraag); host via ⋯-menu, spelers joinen met code
+- **Deck splitsen** — verdeel een deck in N gelijke delen via het ⋯-menu
+- **Deck samenvoegen** — combineer meerdere decks in één nieuw deck; loskoppelen herstelt de originelen
+- **Decks mixen** — selecteer losse decks of alle decks met een tag en studeer ze door elkaar
 - **Deck delen** — genereer een deelcode zodat anderen jouw deck kunnen overnemen
 - **Statistieken** — sessielijst, staafdiagram, correctheidspercentages per deck
 - **Deck editor** — kaarten toevoegen, bewerken, verwijderen; decknaam hernoemen
