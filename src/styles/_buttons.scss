@@ -61,6 +61,7 @@
 	color: $green;
 	border-color: $green-border;
 	&:hover { background: #e3f7ed; }
+	[data-theme="dark"] & { background: #0f2318; border-color: #2a6644; &:hover { background: #142e1f; } }
 }
 .btn-red {
 	@extend %btn-base;
@@ -68,6 +69,7 @@
 	color: $red;
 	border-color: $red-border;
 	&:hover { background: #ffe8e8; }
+	[data-theme="dark"] & { background: #2a1212; border-color: #7a2424; &:hover { background: #331616; } }
 }
 .btn-icon {
 	@extend %btn-base;

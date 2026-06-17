@@ -9,9 +9,9 @@ $orange-border: #e09020;
 .mark-row--three {
   display: flex;
   gap: 0.5rem;
+  justify-content: center;
 
   .btn-doubt {
-    flex: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -25,11 +25,12 @@ $orange-border: #e09020;
     background: $orange-bg;
     color: $orange;
     transition: opacity $transition;
+    white-space: nowrap;
 
     &:hover { opacity: 0.85; }
-  }
 
-  .btn-red, .btn-green { flex: 1; }
+    [data-theme="dark"] & { background: #2a1d08; border-color: #8a5a10; }
+  }
 }
 
 // ── Study mode picker ─────────────────────────────────────────────────
@@ -50,16 +51,24 @@ $orange-border: #e09020;
   gap: 1rem;
   padding: 1.1rem 1.25rem;
   background: $surface;
-  border: 1.5px solid $border;
+  border: 1.5px solid $border-mid;
+  color: $text;
   border-radius: $radius-lg;
   cursor: pointer;
   text-align: left;
   margin-bottom: 0.75rem;
-  transition: border-color $transition, background $transition;
+  transition: border-color $transition, background $transition, box-shadow $transition;
 
   &:hover {
     border-color: $text;
     background: $surface-alt;
+  }
+
+  [data-theme="dark"] & {
+    background: $surface-alt;
+    border-color: $border-mid;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    &:hover { background: $border; border-color: $text-muted; }
   }
 
   &__icon {
@@ -67,12 +76,14 @@ $orange-border: #e09020;
     width: 42px;
     height: 42px;
     border-radius: $radius-md;
-    background: $border;
+    background: $border-mid;
     display: flex;
     align-items: center;
     justify-content: center;
 
     svg { width: 20px; height: 20px; color: $text; }
+
+    [data-theme="dark"] & { background: $border; }
   }
 
   &__body { flex: 1; min-width: 0; }
