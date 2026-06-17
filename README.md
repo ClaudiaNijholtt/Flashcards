@@ -9,6 +9,7 @@ AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcar
 - **Streakteller** — vlam-badge toont hoeveel dagen je aaneengesloten hebt geoefend
 - **"Leer vandaag"** — één klik om alleen de kaarten te studeren die vandaag op het schema staan
 - **Solo multiple choice** — kies per sessie tussen flashcards of MC met 4 opties
+- **Invullen** — typ het antwoord zelf in; systeem controleert automatisch en toont het correcte antwoord
 - **Duel mode** — real-time competitie met een vriend via een 6-cijferige kamercode (anti-cheat MC)
 - **Kahoot-quiz** — multiplayer kennisquiz met timer en snelheidspunten (100–1000 per vraag); host via ⋯-menu, spelers joinen met code
 - **Matchspel** — klik vraag-antwoordparen aan elkaar; timer bijgehouden en fouten geteld

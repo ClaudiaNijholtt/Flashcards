@@ -10,6 +10,14 @@ All notable changes to this project will be documented here.
 
 ---
 
+## [1.25.0] - 2026-06-17
+
+### Added
+
+- **Invullen-modus**: derde studeermodus waarbij je het antwoord zelf intypt; antwoord wordt automatisch gecontroleerd (hoofdletterongevoelig); correct = kwaliteit 2, fout = kwaliteit 0 met het juiste antwoord getoond
+
+---
+
 ## [1.24.0] - 2026-06-17
 
 ### Added

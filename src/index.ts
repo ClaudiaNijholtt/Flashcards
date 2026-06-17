@@ -1,5 +1,5 @@
 import "./styles/main.scss";
-import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Grid2x2, Trophy, Users, Scissors, GitMerge, Unlink } from "lucide";
+import { createIcons, Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Keyboard, Grid2x2 } from "lucide";
 import { state } from "./state";
 import { showToast } from "./utils/helpers";
 import { loadDecks, clearLocalDecks, saveUserTags } from "./utils/storage";
@@ -7,7 +7,7 @@ import { getSessionUser, onAuthChange } from "./services/auth";
 import { fetchDecks, insertDeck, fetchDeckPlayCounts } from "./services/decks";
 import { fetchStreak, fetchAllDueCounts } from "./services/srs";
 import { renderHome, bindHomeEvents } from "./views/home";
-import { renderStudy, bindStudyEvents, startStudy, startDueStudy, handleCardClick, markCard, undoLastCard, getActiveDeck, reshuffleStudy } from "./views/study";
+import { renderStudy, bindStudyEvents, bindStudyTypeAnswerEvents, startStudy, startDueStudy, handleCardClick, markCard, undoLastCard, getActiveDeck, reshuffleStudy } from "./views/study";
 import { renderStudyModePick, bindStudyModePickEvents } from "./views/study-mode-pick";
 import { renderDone, bindDoneEvents } from "./views/done";
 import { renderGenerating } from "./views/generating";
@@ -45,7 +45,11 @@ function render(): void {
 		bindStudyModePickEvents(render);
 	} else if (state.view === "study") {
 		app.innerHTML = renderStudy();
-		bindStudyEvents(render);
+		if (state.studyMode === "type-answer") {
+			bindStudyTypeAnswerEvents(render);
+		} else {
+			bindStudyEvents(render);
+		}
 	} else if (state.view === "done") {
 		app.innerHTML = renderDone();
 		bindDoneEvents(render);
@@ -81,7 +85,7 @@ function render(): void {
 		bindMatchGameEvents(render);
 	}
 
-	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Grid2x2, Trophy, Users, Scissors, GitMerge, Unlink } });
+	createIcons({ icons: { Trash2, LogOut, Download, Upload, ArrowLeft, ArrowRight, Shuffle, X, Check, RotateCcw, Swords, BookOpen, TriangleAlert, Settings, BarChart2, Minus, Clock, User, Eye, EyeOff, Layers, ListChecks, Moon, Sun, Pencil, Save, Plus, Flame, Ellipsis, Share2, LayoutGrid, Trophy, Users, Scissors, GitMerge, Unlink, Keyboard, Grid2x2 } });
 }
 
 function handleStartStats(deckId: string): void {

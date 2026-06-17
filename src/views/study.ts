@@ -91,9 +91,9 @@ export async function startDueStudy(deckId: string, render: () => void): Promise
 export function renderStudy(): string {
 	const deck = getActiveDeck();
 	if (!deck) return "";
-	return state.studyMode === "multiple-choice"
-		? renderStudyMC(deck)
-		: renderStudyFlashcard(deck);
+	if (state.studyMode === "multiple-choice") return renderStudyMC(deck);
+	if (state.studyMode === "type-answer") return renderStudyTypeAnswer(deck);
+	return renderStudyFlashcard(deck);
 }
 
 function renderStudyFlashcard(deck: Deck): string {
@@ -400,6 +400,109 @@ export function cleanupShake(): void {
 		window.removeEventListener("devicemotion", _shakeHandler);
 		_shakeHandler = null;
 	}
+}
+
+function normalize(s: string): string {
+	return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function renderStudyTypeAnswer(deck: Deck): string {
+	const card = deck.cards[state.cardIndex];
+	const pct = Math.round((state.cardIndex / deck.cards.length) * 100);
+
+	return `
+    <div class="study-header">
+      <button class="btn study-header__back" id="btn-back"><i data-lucide="arrow-left"></i> Terug</button>
+      <div class="study-header__title">${esc(deck.name)}</div>
+    </div>
+
+    <div class="progress-row">
+      <span>${state.cardIndex + 1} / ${deck.cards.length}</span>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="score-row">
+        <span class="ok"><i data-lucide="check"></i> ${state.correct}</span>
+        <span class="no"><i data-lucide="x"></i> ${state.wrong}</span>
+      </div>
+    </div>
+
+    <div class="duel-question-card">
+      <div class="duel-question-card__deck">${esc(deck.name)}</div>
+      <div class="duel-question-card__q">${esc(card.question)}</div>
+    </div>
+
+    <div class="type-answer-wrap">
+      <input
+        type="text"
+        id="type-answer-input"
+        class="type-answer-input"
+        placeholder="Jouw antwoord…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      />
+      <div class="mark-row" style="margin-top:0.75rem">
+        <button class="btn-primary" id="btn-type-submit">Controleer <i data-lucide="arrow-right"></i></button>
+      </div>
+
+      <div id="type-answer-result" class="type-answer-result" style="display:none">
+        <div class="type-answer-result__label" id="type-answer-verdict"></div>
+        <div class="type-answer-result__answer" id="type-answer-correct"></div>
+        <div class="mark-row" style="margin-top:0.75rem">
+          <button class="btn-primary" id="btn-type-next">
+            ${state.cardIndex < deck.cards.length - 1
+				? `Volgende <i data-lucide="arrow-right"></i>`
+				: `Klaar <i data-lucide="check"></i>`}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function bindStudyTypeAnswerEvents(render: () => void): void {
+	document.getElementById("btn-back")?.addEventListener("click", () => {
+		state.view = "study-mode-pick";
+		render();
+	});
+
+	const input = document.getElementById("type-answer-input") as HTMLInputElement | null;
+	input?.focus();
+
+	function submit(): void {
+		const deck = getActiveDeck();
+		if (!deck) return;
+		const card = deck.cards[state.cardIndex];
+		const typed = (document.getElementById("type-answer-input") as HTMLInputElement)?.value ?? "";
+		const correct = normalize(typed) === normalize(card.answer);
+		const quality: Quality = correct ? 2 : 0;
+
+		const resultEl = document.getElementById("type-answer-result");
+		const submitBtn = document.getElementById("btn-type-submit");
+		const verdictEl = document.getElementById("type-answer-verdict");
+		const correctEl = document.getElementById("type-answer-correct");
+
+		if (resultEl) {
+			resultEl.style.display = "block";
+			resultEl.className = `type-answer-result type-answer-result--${correct ? "correct" : "wrong"}`;
+		}
+		if (submitBtn) submitBtn.style.display = "none";
+		if (verdictEl) verdictEl.textContent = correct ? "✓ Correct!" : "✗ Fout";
+		if (correctEl) correctEl.textContent = correct ? typed : `Juist antwoord: ${card.answer}`;
+
+		document.getElementById("btn-type-next")?.addEventListener("click", () => {
+			state.flipped = true;
+			markCard(quality, render);
+		});
+	}
+
+	document.getElementById("btn-type-submit")?.addEventListener("click", submit);
+
+	input?.addEventListener("keydown", (e: KeyboardEvent) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			submit();
+		}
+	});
 }
 
 export function bindStudyEvents(render: () => void): void {
