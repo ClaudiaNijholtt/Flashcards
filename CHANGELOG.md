@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [1.27.0] - 2026-06-17
+
+### Added
+
+- **Ontdekken**: publiek deck-archief doorzoekbaar via de "Ontdekken"-knop in de zijbalk; zoeken op naam, deck overnemen met één klik
+- **Deck publiek maken**: via ⋯-menu een deck publiek of privé maken; publieke decks zijn zichtbaar voor alle gebruikers in het archief
+
+### Technical
+
+- SQL-migratie vereist: `ALTER TABLE decks ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;` + RLS policy (zie commentaar bovenaan `src/services/decks.ts`)
+
+---
+
 ## [1.26.0] - 2026-06-17
 
 ### Added

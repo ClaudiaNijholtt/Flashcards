@@ -1,3 +1,10 @@
+// SQL migration — run in Supabase SQL editor:
+// ALTER TABLE decks ADD COLUMN IF NOT EXISTS is_public BOOLEAN DEFAULT false;
+//
+// Allow anyone to read public decks (add to existing RLS):
+// CREATE POLICY "Anyone can read public decks" ON public.decks
+//   FOR SELECT USING (is_public = true);
+
 import { supabase } from "./supabase";
 import { translateDbError } from "../utils/helpers";
 import type { Deck, Flashcard, MergedFromEntry } from "../types";
@@ -17,6 +24,7 @@ export async function fetchDecks(): Promise<Deck[]> {
 		tags: (row.tags as string[] | null) ?? [],
 		color: (row.color as string | null) ?? "",
 		mergedFrom: (row.merged_from as MergedFromEntry[] | null) ?? undefined,
+		isPublic: (row.is_public as boolean | null) ?? false,
 	}));
 }
 
@@ -49,7 +57,8 @@ export async function insertDeck(deck: Deck): Promise<void> {
 		creator_username: deck.creatorUsername ?? null,
 		tags: deck.tags ?? [],
 		color: deck.color ?? "",
-		...(deck.mergedFrom ? { merged_from: deck.mergedFrom } : {}),
+		merged_from: deck.mergedFrom ?? null,
+		is_public: deck.isPublic ?? false,
 	});
 	if (error) throw new Error(translateDbError(error, "Kon deck niet opslaan"));
 }
@@ -108,4 +117,32 @@ export async function fetchDeckByShareCode(code: string): Promise<{ name: string
 		cards: data.cards as Flashcard[],
 		creatorUsername: (data.creator_username as string | null) ?? undefined,
 	};
+}
+
+export async function setDeckPublic(deckId: string, isPublic: boolean): Promise<void> {
+	const { error } = await supabase.from("decks").update({ is_public: isPublic }).eq("id", deckId);
+	if (error) throw new Error(translateDbError(error, "Kon zichtbaarheid niet opslaan"));
+}
+
+export async function fetchPublicDecks(query: string): Promise<Deck[]> {
+	let q = supabase
+		.from("decks")
+		.select("*")
+		.eq("is_public", true)
+		.order("created_at", { ascending: false })
+		.limit(50);
+	if (query.trim()) q = q.ilike("name", `%${query.trim()}%`);
+	const { data, error } = await q;
+	if (error) throw new Error(translateDbError(error, "Kon publieke decks niet laden"));
+	return (data ?? []).map((row) => ({
+		id: row.id as string,
+		name: row.name as string,
+		cards: row.cards,
+		createdAt: new Date(row.created_at as string),
+		creatorUsername: (row.creator_username as string | null) ?? undefined,
+		tags: (row.tags as string[] | null) ?? [],
+		color: (row.color as string | null) ?? "",
+		mergedFrom: (row.merged_from as MergedFromEntry[] | null) ?? undefined,
+		isPublic: true,
+	}));
 }
