@@ -1,4 +1,4 @@
-﻿import { state } from "../state";
+import { state } from "../state";
 import { esc, formatDate, showToast, shuffle } from "../utils/helpers";
 import { saveDecks, deleteDeck } from "../utils/storage";
 import { signOut } from "../services/auth";
@@ -43,7 +43,7 @@ function deckMoreHtml(deck: Deck): string {
         <button class="deck-more__item" data-share="${id}"><i data-lucide="share-2"></i> Delen</button>
         <button class="deck-more__item" data-toggle-public="${id}" data-is-public="${deck.isPublic ? '1' : '0'}">
           <i data-lucide="${deck.isPublic ? 'eye-off' : 'eye'}"></i>
-          ${deck.isPublic ? 'PrivÃ© maken' : 'Publiek maken'}
+          ${deck.isPublic ? 'Privé maken' : 'Publiek maken'}
         </button>
         <button class="deck-more__item" data-edit="${id}"><i data-lucide="pencil"></i> Bewerken</button>
         <button class="deck-more__item" data-export="${id}"><i data-lucide="download"></i> Exporteren</button>
@@ -63,9 +63,9 @@ function deckCardHtml(deck: Deck): string {
         ${(deck.tags ?? []).length > 0 ? `<div class="deck-card__tags">${(deck.tags ?? []).map((name) => { const hex = state.userTags.find((t) => t.name === name)?.color ?? "#6b7280"; return `<span class="deck-tag-pill" style="--tag-color:${hex};--tag-bg:${hex}1a;">${esc(name)}</span>`; }).join("")}</div>` : ""}
         <div class="deck-card__name">${colorDot}${esc(deck.name)}</div>
         <div class="deck-card__meta">
-          ${deck.cards.length} kaarten &nbsp;Â·&nbsp; ${formatDate(deck.createdAt)}
-          ${deck.creatorUsername ? `&nbsp;Â·&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
-          ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;Â·&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
+          ${deck.cards.length} kaarten &nbsp;&middot;&nbsp; ${formatDate(deck.createdAt)}
+          ${deck.creatorUsername ? `&nbsp;&middot;&nbsp; <span class="deck-card__creator"><i data-lucide="user" style="width:11px;height:11px;vertical-align:-1px"></i> ${esc(deck.creatorUsername)}</span>` : ""}
+          ${(state.deckPlayCounts[deck.id] ?? 0) > 0 ? `&nbsp;&middot;&nbsp; <span class="deck-card__plays"><i data-lucide="swords" style="width:11px;height:11px;vertical-align:-1px"></i> ${state.deckPlayCounts[deck.id]} keer geduelleerd</span>` : ""}
         </div>
       </div>
       <div class="deck-card__actions">
@@ -93,7 +93,7 @@ export function renderHome(): string {
           <span class="home-stat__num">${state.decks.length}</span>
           <span class="home-stat__label">deck${state.decks.length !== 1 ? "s" : ""}</span>
         </div>
-        <span class="home-stat__sep">Â·</span>
+        <span class="home-stat__sep">&middot;</span>
         <div class="home-stat">
           <span class="home-stat__num">${totalCards}</span>
           <span class="home-stat__label">kaarten</span>
@@ -115,7 +115,7 @@ export function renderHome(): string {
           type="search"
           id="deck-search"
           class="deck-search"
-          placeholder="Zoekenâ€¦"
+          placeholder="Zoeken&hellip;"
           value="${esc(state.deckSearch)}"
           autocomplete="off"
         />
@@ -171,7 +171,7 @@ export function renderHome(): string {
         <div class="join-game-section">
           <div class="join-game-section__label">Meedoen aan een spel</div>
           <div class="join-game-section__form">
-            <input type="text" id="duel-code-home" class="join-game-section__input" placeholder="Spelcodeâ€¦" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+            <input type="text" id="duel-code-home" class="join-game-section__input" placeholder="Spelcode&hellip;" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" />
             <button class="btn-primary" id="btn-home-join-duel" title="Meedoen">
               <i data-lucide="arrow-right"></i>
             </button>
@@ -235,7 +235,7 @@ export function renderHome(): string {
           </div>` : ""}
           <div class="merge-search-wrap">
             <i data-lucide="search" class="merge-search__icon"></i>
-            <input type="search" id="mix-search" placeholder="Zoekenâ€¦" autocomplete="off" />
+            <input type="search" id="mix-search" placeholder="Zoeken&hellip;" autocomplete="off" />
           </div>
           <div id="mix-deck-list" class="merge-deck-list"></div>
           <p id="mix-preview" style="font-size:13px;color:var(--text-muted);margin-top:0.75rem;margin-bottom:1.1rem"></p>
@@ -259,7 +259,7 @@ export function renderHome(): string {
           <label style="display:block;font-size:14px;font-weight:600;margin-bottom:0.5rem">Selecteer decks om samen te voegen</label>
           <div class="merge-search-wrap">
             <i data-lucide="search" class="merge-search__icon"></i>
-            <input type="search" id="merge-search" placeholder="Zoekenâ€¦" autocomplete="off" />
+            <input type="search" id="merge-search" placeholder="Zoeken&hellip;" autocomplete="off" />
           </div>
           <div id="merge-deck-list" class="merge-deck-list"></div>
           <p id="merge-preview" style="font-size:13px;color:var(--text-muted);margin-top:0.75rem;margin-bottom:1.1rem"></p>
@@ -348,7 +348,7 @@ function mergeDeckCardHtml(deck: Deck): string {
       <div class="merge-deck-card__info">
         ${tagsHtml}
         <div class="merge-deck-card__name">${colorDot}${esc(deck.name)}</div>
-        <div class="merge-deck-card__meta">${deck.cards.length} kaarten Â· ${formatDate(deck.createdAt)}</div>
+        <div class="merge-deck-card__meta">${deck.cards.length} kaarten &middot; ${formatDate(deck.createdAt)}</div>
       </div>
       <div class="merge-deck-card__check"><i data-lucide="check"></i></div>
     </div>`;
@@ -407,7 +407,7 @@ function updateMergePreview(baseDeckId: string): void {
 		.filter(Boolean) as typeof state.decks;
 	const total = base.cards.length + selectedCards.reduce((s, d) => s + d.cards.length, 0);
 	if (selectedCards.length === 0) {
-		preview.textContent = "Selecteer minimaal Ã©Ã©n deck om samen te voegen.";
+		preview.textContent = "Selecteer minimaal één deck om samen te voegen.";
 	} else {
 		preview.textContent = `Resultaat: ${total} kaarten (${base.cards.length} + ${selectedCards.map((d) => d.cards.length).join(" + ")})`;
 	}
@@ -454,7 +454,7 @@ function renderMixDeckList(query: string): void {
         <div class="merge-deck-card__info">
           ${tagsHtml}
           <div class="merge-deck-card__name">${colorDot}${esc(d.name)}</div>
-          <div class="merge-deck-card__meta">${d.cards.length} kaarten Â· ${formatDate(d.createdAt)}</div>
+          <div class="merge-deck-card__meta">${d.cards.length} kaarten &middot; ${formatDate(d.createdAt)}</div>
         </div>
         <div class="merge-deck-card__check"><i data-lucide="check"></i></div>
       </div>`;
@@ -477,9 +477,9 @@ function updateMixPreview(): void {
 		.filter(Boolean) as typeof state.decks;
 	const total = selected.reduce((s, d) => s + d.cards.length, 0);
 	if (selected.length === 0) {
-		preview.textContent = "Selecteer minimaal Ã©Ã©n deck.";
+		preview.textContent = "Selecteer minimaal één deck.";
 	} else {
-		preview.textContent = `${selected.length} deck${selected.length !== 1 ? "s" : ""} geselecteerd Â· ${total} kaarten`;
+		preview.textContent = `${selected.length} deck${selected.length !== 1 ? "s" : ""} geselecteerd · ${total} kaarten`;
 	}
 }
 
@@ -634,7 +634,7 @@ export function bindHomeEvents(
 					await setDeckPublic(id, !isPublic);
 					const deck = state.decks.find((d) => d.id === id);
 					if (deck) deck.isPublic = !isPublic;
-					showToast(isPublic ? "Deck is nu privÃ©" : "Deck is nu publiek zichtbaar");
+					showToast(isPublic ? "Deck is nu privé" : "Deck is nu publiek zichtbaar");
 					render();
 				} catch (err) {
 					showToast(err instanceof Error ? err.message : "Opslaan mislukt", true);
@@ -725,7 +725,7 @@ export function bindHomeEvents(
 		try {
 			const data = JSON.parse(await file.text());
 			if (!isValidDeckJson(data)) {
-				showToast("Ongeldig JSON-formaat â€” verwacht: { name, cards: [{ question, answer }] }", true);
+				showToast("Ongeldig JSON-formaat — verwacht: { name, cards: [{ question, answer }] }", true);
 				return;
 			}
 			const deck: Deck = {
@@ -749,7 +749,7 @@ export function bindHomeEvents(
 				state.decks.push(deck);
 				saveDecks(state.decks);
 			}
-			showToast(`"${esc(data.name)}" geÃ¯mporteerd âœ“`);
+			showToast(`”${esc(data.name)}” geïmporteerd ✓`);
 			render();
 		} catch {
 			showToast("Kan JSON-bestand niet lezen", true);
@@ -931,7 +931,7 @@ export function bindHomeEvents(
 				state.decks.push(deck);
 				saveDecks(state.decks);
 			}
-			showToast(`"${deck.name}" overgenomen âœ“`);
+			showToast(`"${deck.name}" overgenomen ✓`);
 			render();
 		} catch (err) {
 			if (errEl) { errEl.textContent = err instanceof Error ? err.message : "Overnemen mislukt"; errEl.classList.remove("hidden"); }
@@ -956,10 +956,10 @@ export function bindHomeEvents(
 		const selectedDecks = Array.from(document.querySelectorAll<HTMLElement>(".merge-deck-card--selected"))
 			.map((el) => state.decks.find((d) => d.id === el.dataset.mergeId))
 			.filter(Boolean) as typeof state.decks;
-		if (selectedDecks.length === 0) { showToast("Selecteer minimaal Ã©Ã©n deck om samen te voegen", true); return; }
+		if (selectedDecks.length === 0) { showToast("Selecteer minimaal één deck om samen te voegen", true); return; }
 		const btn = document.getElementById("btn-confirm-merge") as HTMLButtonElement;
 		btn.disabled = true;
-		btn.textContent = "Samenvoegenâ€¦";
+		btn.textContent = "Samenvoegen…";
 		try {
 			const allCards = [
 				...base.cards,
@@ -989,7 +989,7 @@ export function bindHomeEvents(
 				saveDecks(state.decks);
 			}
 			closeMergeModal();
-			showToast(`"${name}" aangemaakt met ${allCards.length} kaarten âœ“`);
+			showToast(`"${name}" aangemaakt met ${allCards.length} kaarten ✓`);
 			render();
 		} catch (err) {
 			showToast(err instanceof Error ? err.message : "Samenvoegen mislukt", true);
@@ -1022,7 +1022,7 @@ export function bindHomeEvents(
 		const selected = Array.from(document.querySelectorAll<HTMLElement>(".mix-deck-card--selected"))
 			.map((el) => state.decks.find((d) => d.id === el.dataset.mixId))
 			.filter(Boolean) as typeof state.decks;
-		if (selected.length === 0) { showToast("Selecteer minimaal Ã©Ã©n deck", true); return; }
+		if (selected.length === 0) { showToast("Selecteer minimaal één deck", true); return; }
 		const allCards = shuffle(selected.flatMap((d) => d.cards).map((c) => ({ ...c })));
 		const name = selected.length === 1
 			? selected[0].name
@@ -1057,7 +1057,7 @@ export function bindHomeEvents(
 		}
 		const btn = document.getElementById("btn-confirm-split") as HTMLButtonElement;
 		btn.disabled = true;
-		btn.textContent = "Splitsenâ€¦";
+		btn.textContent = "Splitsen…";
 		try {
 			const shuffled = [...deck.cards];
 			const base = Math.floor(shuffled.length / parts);
@@ -1068,7 +1068,7 @@ export function bindHomeEvents(
 				const size = base + (i < remainder ? 1 : 0);
 				newDecks.push({
 					id: crypto.randomUUID(),
-					name: `${deck.name} (deel ${i + 1} van ${parts})`,
+					name: `${deck.name} (${i + 1}/${parts})`,
 					cards: shuffled.slice(offset, offset + size).map((c) => ({ ...c, id: c.id ?? crypto.randomUUID() })),
 					createdAt: new Date(),
 					creatorUsername: state.user?.username ?? undefined,
@@ -1086,7 +1086,7 @@ export function bindHomeEvents(
 				saveDecks(state.decks);
 			}
 			closeSplitModal();
-			showToast(`"${deck.name}" gesplitst in ${parts} delen âœ“`);
+			showToast(`"${deck.name}" gesplitst in ${parts} delen ✓`);
 			render();
 		} catch (err) {
 			showToast(err instanceof Error ? err.message : "Splitsen mislukt", true);
@@ -1155,7 +1155,7 @@ async function handleUnmerge(deckId: string, render: () => void): Promise<void> 
 			state.decks.push(...newDecks);
 			saveDecks(state.decks);
 		}
-		showToast(`Losgekoppeld in ${parts.length} decks âœ“`);
+		showToast(`Losgekoppeld in ${parts.length} decks ✓`);
 		render();
 	} catch (err) {
 		showToast(err instanceof Error ? err.message : "Loskoppelen mislukt", true);
@@ -1202,7 +1202,7 @@ async function handleFiles(files: File[], render: () => void): Promise<void> {
 			} else {
 				saveDecks(state.decks);
 			}
-			showToast(`${cards.length} flashcards aangemaakt âœ“`);
+			showToast(`${cards.length} flashcards aangemaakt ✓`);
 		} catch (err) {
 			showToast(err instanceof Error ? err.message : "Onbekende fout", true);
 		}
