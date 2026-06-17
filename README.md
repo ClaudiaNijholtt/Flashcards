@@ -16,8 +16,10 @@ AI-powered flashcard app. Upload een PDF of tekstbestand en laat Claude flashcar
 - **Deck splitsen** — verdeel een deck in N gelijke delen via het ⋯-menu
 - **Deck samenvoegen** — combineer meerdere decks in één nieuw deck; loskoppelen herstelt de originelen
 - **Decks mixen** — selecteer losse decks of alle decks met een tag en studeer ze door elkaar
+- **Ontdekken** — doorzoek publieke decks van andere gebruikers en neem ze over met één klik
 - **Deck delen** — genereer een deelcode zodat anderen jouw deck kunnen overnemen
 - **Statistieken** — sessielijst, staafdiagram, correctheidspercentages per deck
+- **Afbeeldingen op kaarten** — voeg een afbeelding toe per kaart via de editor; zichtbaar tijdens studeren
 - **Deck editor** — kaarten toevoegen, bewerken, verwijderen; decknaam hernoemen
 - **Donker thema** — wisselt runtime, voorkeur opgeslagen in localStorage
 - **Deck zoeken & filteren** — live filter op naam en tag op de homepagina

@@ -12,6 +12,7 @@
 @use './game';
 @use './match';
 @use './audio';
+@use './discover';
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

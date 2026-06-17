@@ -2,6 +2,7 @@ export interface Flashcard {
   id: string;
   question: string;
   answer: string;
+  imageUrl?: string;
   audioUrl?: string;
 }
 
@@ -38,6 +39,7 @@ export interface Deck {
   tags?: string[];
   color?: string;
   mergedFrom?: MergedFromEntry[];
+  isPublic?: boolean;
 }
 
 export interface AuthUser {
@@ -128,7 +130,7 @@ export interface ActiveQuiz {
 }
 
 export interface AppState {
-  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player' | 'match-game';
+  view: 'home' | 'study-mode-pick' | 'study' | 'done' | 'duel-lobby' | 'duel-playing' | 'duel-result' | 'username-setup' | 'stats' | 'profile' | 'deck-edit' | 'quiz-host' | 'quiz-player' | 'match-game' | 'discover';
   editDeckId: string | null;
   studyMode: 'flashcard' | 'multiple-choice' | 'type-answer';
   mixStudyName: string | null;
